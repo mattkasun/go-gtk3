@@ -3,7 +3,7 @@
 package gdk
 
 /*
-#cgo pkg-config: gdk-2.0 gthread-2.0
+#cgo pkg-config: gdk-3.0 gthread-2.0
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>

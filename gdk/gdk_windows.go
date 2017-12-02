@@ -5,7 +5,7 @@ package gdk
 /*
 #include <gdk/gdk.h>
 #include <gdk/gdkwin32.h>
-// #cgo pkg-config: gdk-2.0 gthread-2.0
+// #cgo pkg-config: gdk-3.0 gthread-2.0
 */
 import "C"
 import "unsafe"

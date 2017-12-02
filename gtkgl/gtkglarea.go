@@ -6,7 +6,7 @@ package gtkgl
 // #cgo pkg-config: gtkgl-2.0
 import "C"
 
-import "github.com/mattn/go-gtk/gtk"
+import "../gtk"
 import "unsafe"
 
 type GLArea struct {

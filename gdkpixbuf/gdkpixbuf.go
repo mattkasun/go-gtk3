@@ -5,7 +5,7 @@ package gdkpixbuf
 // #include "gdkpixbuf.go.h"
 // #cgo pkg-config: gdk-pixbuf-2.0
 import "C"
-import "github.com/mattn/go-gtk/glib"
+import "../glib"
 import (
 	"log"
 	"runtime"

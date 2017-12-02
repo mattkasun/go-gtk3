@@ -14,8 +14,8 @@ static inline gchar* to_gcharptr(const char* s) { return (gchar*)s; }
 import "C"
 import "unsafe"
 
-import "github.com/mattn/go-gtk/glib"
-import "github.com/mattn/go-gtk/gtk"
+import "../glib"
+import "../gtk"
 
 //-----------------------------------------------------------------------
 // GtkSpell

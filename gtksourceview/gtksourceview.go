@@ -8,7 +8,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/mattn/go-gtk/gtk"
+	"../gtk"
 )
 
 func gstring(s *C.char) *C.gchar { return C.toGstr(s) }

@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/mattn/go-gtk/glib"
-	"github.com/mattn/go-gtk/gtk"
+	"../../glib"
+	"../../gtk"
 )
 
 func CreateWindow() *gtk.Window {

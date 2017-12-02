@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mattn/go-gtk/gdkpixbuf"
-	"github.com/mattn/go-gtk/gtk"
+	"../../gdkpixbuf"
+	"../../gtk"
 )
 
 func main() {

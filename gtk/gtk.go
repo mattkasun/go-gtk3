@@ -6,7 +6,7 @@ Go Bindings for Gtk+ 2. Support version 2.16 and later.
 package gtk
 
 // #include "gtk.go.h"
-// #cgo pkg-config: gtk+-2.0
+// #cgo pkg-config: gtk+-3.0
 import "C"
 import (
 	"fmt"
@@ -16,10 +16,10 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/mattn/go-gtk/gdk"
-	"github.com/mattn/go-gtk/gdkpixbuf"
-	"github.com/mattn/go-gtk/glib"
-	"github.com/mattn/go-gtk/pango"
+	"../gdk"
+	"../gdkpixbuf"
+	"../glib"
+	"../pango"
 	"github.com/mattn/go-pointer"
 )
 
