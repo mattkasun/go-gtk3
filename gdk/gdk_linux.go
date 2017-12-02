@@ -8,8 +8,6 @@ package gdk
 // #cgo pkg-config: gdk-3.0 gthread-2.0
 */
 import "C"
-import "unsafe"
+//import "unsafe"
 
-func (v *Window) GetNativeWindowID() int32 {
-	return int32(C.gdk_x11_drawable_get_xid((*C.GdkDrawable)(unsafe.Pointer(v.GWindow))))
-}
+
