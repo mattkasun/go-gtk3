@@ -271,9 +271,9 @@ static void _gtk_tree_iter_assign(void* iter, void* to) {
 	*(GtkTreeIter*)iter = *(GtkTreeIter*)to;
 }
 
-static GtkWidget* _gtk_dialog_get_vbox(GtkWidget* w) {
-  return GTK_DIALOG(w)->vbox;
-}
+//static GtkWidget* _gtk_dialog_get_vbox(GtkWidget* w) {
+//  return GTK_DIALOG(w)->vbox;
+//}
 
 //////////////////////////////////////////////
 // ############# Version Control #############
@@ -791,7 +791,6 @@ static inline GtkRadioButton* toGRadioButton(GtkWidget* w) { return GTK_RADIO_BU
 static inline GtkFontButton* toGFontButton(GtkWidget* w) { return GTK_FONT_BUTTON(w); }
 static inline GtkLinkButton* toGLinkButton(GtkWidget* w) { return GTK_LINK_BUTTON(w); }
 static inline GtkComboBox* toGComboBox(GtkWidget* w) { return GTK_COMBO_BOX(w); }
-static inline GtkComboBoxEntry* toGComboBoxEntry(GtkWidget* w) { return GTK_COMBO_BOX_ENTRY(w); }
 static inline GtkMessageDialog* toGMessageDialog(GtkWidget* w) { return GTK_MESSAGE_DIALOG(w); }
 #if GTK_CHECK_VERSION(2,24,0)
 static inline GtkComboBoxText* toGComboBoxText(GtkWidget* w) { return GTK_COMBO_BOX_TEXT(w); }
@@ -809,8 +808,6 @@ static inline GtkToggleButton* toGToggleButton(GtkWidget* w) { return GTK_TOGGLE
 static inline GtkAccelLabel* toGAccelLabel(GtkWidget* w) { return GTK_ACCEL_LABEL(w); }
 static inline GtkEntry* toGEntry(GtkWidget* w) { return GTK_ENTRY(w); }
 static inline GtkScaleButton* toGScaleButton(GtkWidget* w) { return GTK_SCALE_BUTTON(w); }
-static inline GtkStyle* toGStyle(GtkObject* o) { return GTK_STYLE(o); }
-static inline GtkAdjustment* toGAdjustment(GtkObject* o) { return GTK_ADJUSTMENT(o); }
 static inline GtkArrow* toGArrow(GtkWidget* w) { return GTK_ARROW(w); }
 static inline GtkTextView* toGTextView(GtkWidget* w) { return GTK_TEXT_VIEW(w); }
 static inline GtkTextBuffer* toGTextBuffer(void* w) { return GTK_TEXT_BUFFER(w); }
@@ -819,7 +816,6 @@ static inline GtkMenu* toGMenu(GtkWidget* w) { return GTK_MENU(w); }
 static inline GtkMenuBar* toGMenuBar(GtkWidget* w) { return GTK_MENU_BAR(w); }
 static inline GtkMenuShell* toGMenuShell(GtkWidget* w) { return GTK_MENU_SHELL(w); }
 static inline GtkMenuItem* toGMenuItem(GtkWidget* w) { return GTK_MENU_ITEM(w); }
-static inline GtkItem* toGItem(GtkWidget* w) { return GTK_ITEM(w); }
 static inline GtkToolbar* toGToolbar(GtkWidget* w) { return GTK_TOOLBAR(w); }
 static inline GtkToolItem* toGToolItem(GtkWidget* w) { return GTK_TOOL_ITEM(w); }
 static inline GtkSeparatorToolItem* toGSeparatorToolItem(GtkWidget* w) { return GTK_SEPARATOR_TOOL_ITEM(w); }
