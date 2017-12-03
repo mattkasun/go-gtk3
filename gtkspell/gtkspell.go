@@ -15,7 +15,7 @@ import "C"
 import "unsafe"
 
 import "github.com/zurek87/go-gtk3/glib"
-import "github.com/zurek87/go-gtk3/gtk"
+import "github.com/zurek87/go-gtk3/gtk3"
 
 //-----------------------------------------------------------------------
 // GtkSpell
@@ -24,7 +24,7 @@ type GtkSpell struct {
 	Spell *C.GtkSpell
 }
 
-func New(textview *gtk.TextView, language string) (*GtkSpell, *glib.Error) {
+func New(textview *gtk3.TextView, language string) (*GtkSpell, *glib.Error) {
 	var lang *C.char
 	if len(language) > 0 {
 		lang = C.CString(language)

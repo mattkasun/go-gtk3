@@ -2,47 +2,47 @@ package main
 
 import (
 	"fmt"
-	"github.com/zurek87/go-gtk3/gdk"
+	"github.com/zurek87/go-gtk3/gdk3"
 	"github.com/zurek87/go-gtk3/glib"
-	"github.com/zurek87/go-gtk3/gtk"
+	"github.com/zurek87/go-gtk3/gtk3"
 	"os"
 	"unsafe"
 )
 
 func main() {
-	gtk.Init(&os.Args)
-	window := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
+	gtk3.Init(&os.Args)
+	window := gtk3.NewWindow(gtk3.WINDOW_TOPLEVEL)
 	window.SetTitle("GTK Events")
-	window.Connect("destroy", gtk.MainQuit)
+	window.Connect("destroy", gtk3.MainQuit)
 
 	event := make(chan interface{})
 
 	window.Connect("key-press-event", func(ctx *glib.CallbackContext) {
 		arg := ctx.Args(0)
-		event <- *(**gdk.EventKey)(unsafe.Pointer(&arg))
+		event <- *(**gdk3.EventKey)(unsafe.Pointer(&arg))
 	})
 	window.Connect("motion-notify-event", func(ctx *glib.CallbackContext) {
 		arg := ctx.Args(0)
-		event <- *(**gdk.EventMotion)(unsafe.Pointer(&arg))
+		event <- *(**gdk3.EventMotion)(unsafe.Pointer(&arg))
 	})
 
 	go func() {
 		for {
 			e := <-event
 			switch ev := e.(type) {
-			case *gdk.EventKey:
+			case *gdk3.EventKey:
 				fmt.Println("key-press-event:", ev.Keyval)
 				break
-			case *gdk.EventMotion:
+			case *gdk3.EventMotion:
 				fmt.Println("motion-notify-event:", int(ev.X), int(ev.Y))
 				break
 			}
 		}
 	}()
 
-	window.SetEvents(int(gdk.POINTER_MOTION_MASK | gdk.POINTER_MOTION_HINT_MASK | gdk.BUTTON_PRESS_MASK))
+	window.SetEvents(int(gdk3.POINTER_MOTION_MASK | gdk3.POINTER_MOTION_HINT_MASK | gdk3.BUTTON_PRESS_MASK))
 	window.SetSizeRequest(400, 400)
 	window.ShowAll()
 
-	gtk.Main()
+	gtk3.Main()
 }

@@ -8,7 +8,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/zurek87/go-gtk3/gtk"
+	"github.com/zurek87/go-gtk3/gtk3"
 )
 
 func gstring(s *C.char) *C.gchar { return C.toGstr(s) }
@@ -36,17 +36,17 @@ func cfree(s *C.char) { C.freeCstr(s) }
 //-----------------------------------------------------------------------
 type SourceBuffer struct {
 	GSourceBuffer *C.GtkSourceBuffer
-	*gtk.TextBuffer
+	*gtk3.TextBuffer
 }
 
 func NewSourceBuffer() *SourceBuffer {
 	v := C.gtk_source_buffer_new(nil)
-	return &SourceBuffer{v, gtk.NewTextBufferFromPointer(unsafe.Pointer(v))}
+	return &SourceBuffer{v, gtk3.NewTextBufferFromPointer(unsafe.Pointer(v))}
 }
 
 func NewSourceBufferWithLanguage(lang *SourceLanguage) *SourceBuffer {
 	v := C.gtk_source_buffer_new_with_language(lang.GSourceLanguage)
-	return &SourceBuffer{v, gtk.NewTextBufferFromPointer(unsafe.Pointer(v))}
+	return &SourceBuffer{v, gtk3.NewTextBufferFromPointer(unsafe.Pointer(v))}
 }
 
 func (v *SourceBuffer) GetNativeBuffer() unsafe.Pointer {
@@ -89,17 +89,17 @@ func (v *SourceBuffer) SetStyleScheme(scheme *SourceStyleScheme) {
 // GtkSourceView
 //-----------------------------------------------------------------------
 type SourceView struct {
-	gtk.TextView
+	gtk3.TextView
 }
 
 func NewSourceView() *SourceView {
-	return &SourceView{gtk.TextView{gtk.Container{
-		*gtk.WidgetFromNative(unsafe.Pointer(C.gtk_source_view_new()))}}}
+	return &SourceView{gtk3.TextView{gtk3.Container{
+		*gtk3.WidgetFromNative(unsafe.Pointer(C.gtk_source_view_new()))}}}
 }
 
 func NewSourceViewWithBuffer(buf *SourceBuffer) *SourceView {
-	return &SourceView{gtk.TextView{gtk.Container{
-		*gtk.WidgetFromNative(unsafe.Pointer(C.gtk_source_view_new_with_buffer(buf.GSourceBuffer)))}}}
+	return &SourceView{gtk3.TextView{gtk3.Container{
+		*gtk3.WidgetFromNative(unsafe.Pointer(C.gtk_source_view_new_with_buffer(buf.GSourceBuffer)))}}}
 }
 
 func (v *SourceView) ToNativeSourceView() *C.GtkSourceView {

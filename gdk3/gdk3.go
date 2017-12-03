@@ -1,9 +1,9 @@
 // +build !cgocheck
 
-package gdk
+package gdk3
 
-// #include "gdk.go.h"
-// #cgo pkg-config: gdk-3.0 gthread-2.0
+// #include "gdk3.go.h"
+// #cgo pkg-config: gdk-3.0
 import "C"
 import (
 	"unsafe"

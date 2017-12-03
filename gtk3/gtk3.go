@@ -3,9 +3,9 @@
 /*
 Go Bindings for Gtk+ 2. Support version 2.16 and later.
 */
-package gtk
+package gtk3
 
-// #include "gtk.go.h"
+// #include "gtk3.go.h"
 // #cgo pkg-config: gtk+-3.0
 import "C"
 import (
@@ -16,7 +16,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/zurek87/go-gtk3/gdk"
+	"github.com/zurek87/go-gtk3/gdk3"
 	"github.com/zurek87/go-gtk3/gdkpixbuf"
 	"github.com/zurek87/go-gtk3/glib"
 	"github.com/zurek87/go-gtk3/pango"
@@ -316,14 +316,14 @@ func NewAccelGroup() *AccelGroup {
 
 // Parse string representing an accelerator
 // and return the key code and the modifier masks.
-func AcceleratorParse(accelerator string) (uint, gdk.ModifierType) {
+func AcceleratorParse(accelerator string) (uint, gdk3.ModifierType) {
 	ptrn := C.CString(accelerator)
 	defer cfree(ptrn)
 
 	var key C.guint
 	var mods C.GdkModifierType
 	C.gtk_accelerator_parse(gstring(ptrn), &key, &mods)
-	return uint(key), gdk.ModifierType(mods)
+	return uint(key), gdk3.ModifierType(mods)
 }
 
 // gtk_accelerator_name
@@ -360,7 +360,7 @@ type Clipboard struct {
 	GClipboard *C.GtkClipboard
 }
 
-func NewClipboardGetForDisplay(display *gdk.Display, selection gdk.Atom) *Clipboard {
+func NewClipboardGetForDisplay(display *gdk3.Display, selection gdk3.Atom) *Clipboard {
 	var cdisplay unsafe.Pointer
 	if display != nil {
 		cdisplay = display.GDisplay
@@ -387,7 +387,7 @@ func (v *Clipboard) Store() {
 	C.gtk_clipboard_store(v.GClipboard)
 }
 
-func (v *Clipboard) WaitForContents(target gdk.Atom) *SelectionData {
+func (v *Clipboard) WaitForContents(target gdk3.Atom) *SelectionData {
 	gsel := C.gtk_clipboard_wait_for_contents(v.GClipboard, C.GdkAtom(unsafe.Pointer(target)))
 	return NewSelectionDataFromNative(unsafe.Pointer(gsel))
 }
@@ -449,7 +449,7 @@ type TargetEntry struct {
 	Info   uint
 }
 
-func (v *Widget) DragDestSet(flags DestDefaults, targets []TargetEntry, actions gdk.DragAction) {
+func (v *Widget) DragDestSet(flags DestDefaults, targets []TargetEntry, actions gdk3.DragAction) {
 	ctargets := make([]C.GtkTargetEntry, len(targets))
 	for i, target := range targets {
 		ptr := C.CString(target.Target)
@@ -461,7 +461,7 @@ func (v *Widget) DragDestSet(flags DestDefaults, targets []TargetEntry, actions 
 	C.gtk_drag_dest_set(v.GWidget, C.GtkDestDefaults(flags), &ctargets[0], gint(len(targets)), C.GdkDragAction(actions))
 }
 
-func (v *Widget) DragSourceSet(start_button_mask gdk.ModifierType, targets []TargetEntry, actions gdk.DragAction) {
+func (v *Widget) DragSourceSet(start_button_mask gdk3.ModifierType, targets []TargetEntry, actions gdk3.DragAction) {
 	ctargets := make([]C.GtkTargetEntry, len(targets))
 	for i, target := range targets {
 		ptr := C.CString(target.Target)
@@ -473,7 +473,7 @@ func (v *Widget) DragSourceSet(start_button_mask gdk.ModifierType, targets []Tar
 	C.gtk_drag_source_set(v.GWidget, C.GdkModifierType(start_button_mask), &ctargets[0], gint(len(targets)), C.GdkDragAction(actions))
 }
 
-func (v *Widget) DragFinish(context *gdk.DragContext, success bool, del bool, time uint32) {
+func (v *Widget) DragFinish(context *gdk3.DragContext, success bool, del bool, time uint32) {
 	C._gtk_drag_finish(unsafe.Pointer(context.DragContext), gbool(success), gbool(del), guint32(time))
 }
 
@@ -790,7 +790,7 @@ type Settings struct {
 }
 
 // gtk_settings_get_for_screen
-func GetSettingsForScreen(screen gdk.Screen) *Settings {
+func GetSettingsForScreen(screen gdk3.Screen) *Settings {
 	gScreen := C.toGdkScreen(unsafe.Pointer(screen.GScreen))
 	return &Settings{GSettings: C.gtk_settings_get_for_screen(gScreen)}
 }
@@ -894,10 +894,10 @@ func (v *Style) SetBackground(window *Window, state StateType) {
 
 // gtk_style_apply_default_background
 
-func (v *Style) LookupColor(colorName string) (*gdk.Color, bool) {
+func (v *Style) LookupColor(colorName string) (*gdk3.Color, bool) {
 	color_name := C.CString(colorName)
 	defer cfree(color_name)
-	color := new(gdk.Color)
+	color := new(gdk3.Color)
 	b := C.gtk_style_lookup_color(v.GStyle, gstring(color_name), (*C.GdkColor)(unsafe.Pointer(&color.GColor)))
 	return color, gobool(b)
 }
@@ -1325,7 +1325,7 @@ func (v *Window) SetDefaultSize(width int, height int) {
 	C.gtk_window_set_default_size(WINDOW(v), gint(width), gint(height))
 }
 
-func (v *Window) SetGravity(gravity gdk.Gravity) {
+func (v *Window) SetGravity(gravity gdk3.Gravity) {
 	C.gtk_window_set_gravity(WINDOW(v), C.GdkGravity(gravity))
 }
 
@@ -1344,13 +1344,13 @@ func (v *Window) SetDestroyWithParent(setting bool) {
 	C.gtk_window_set_destroy_with_parent(WINDOW(v), gbool(setting))
 }
 
-func (v *Window) SetScreen(screen *gdk.Screen) {
+func (v *Window) SetScreen(screen *gdk3.Screen) {
 	gScreen := C.toGdkScreen(unsafe.Pointer(screen.GScreen))
 	C.gtk_window_set_screen(WINDOW(v), gScreen)
 }
 
-func (v *Window) GetScreen() *gdk.Screen {
-	return gdk.ScreenFromUnsafe(unsafe.Pointer(C.gtk_window_get_screen(WINDOW(v))))
+func (v *Window) GetScreen() *gdk3.Screen {
+	return gdk3.ScreenFromUnsafe(unsafe.Pointer(C.gtk_window_get_screen(WINDOW(v))))
 }
 
 func (v *Window) IsActive() bool {
@@ -1432,7 +1432,7 @@ func (v *Window) SetDeletable(setting bool) {
 	C.gtk_window_set_deletable(WINDOW(v), gbool(setting))
 }
 
-func (v *Window) SetTypeHint(hint gdk.WindowTypeHint) {
+func (v *Window) SetTypeHint(hint gdk3.WindowTypeHint) {
 	C.gtk_window_set_type_hint(WINDOW(v), C.GdkWindowTypeHint(hint))
 }
 
@@ -1506,8 +1506,8 @@ func (v *Window) GetTitle() string {
 	return gostring(C.gtk_window_get_title(WINDOW(v)))
 }
 
-func (v *Window) GetTypeHint() gdk.WindowTypeHint {
-	return gdk.WindowTypeHint(C.gtk_window_get_type_hint(WINDOW(v)))
+func (v *Window) GetTypeHint() gdk3.WindowTypeHint {
+	return gdk3.WindowTypeHint(C.gtk_window_get_type_hint(WINDOW(v)))
 }
 
 // gtk_window_get_transient_for
@@ -2788,8 +2788,8 @@ func (v *Button) GetImagePosition() PositionType {
 	return PositionType(C.gtk_button_get_image_position(BUTTON(v)))
 }
 
-func (v *Button) GetEventWindow() *gdk.Window {
-	return gdk.WindowFromUnsafe(unsafe.Pointer(C.gtk_button_get_event_window(BUTTON(v))))
+func (v *Button) GetEventWindow() *gdk3.Window {
+	return gdk3.WindowFromUnsafe(unsafe.Pointer(C.gtk_button_get_event_window(BUTTON(v))))
 }
 
 //-----------------------------------------------------------------------
@@ -7724,18 +7724,18 @@ func NewColorButton() *ColorButton {
 		AS_GWIDGET(unsafe.Pointer(C.gtk_color_button_new())))}
 }
 
-func NewColorButtonWithColor(color *gdk.Color) *ColorButton {
+func NewColorButtonWithColor(color *gdk3.Color) *ColorButton {
 	v := NewColorButton()
 	v.SetColor(color)
 	return v
 }
 
-func (v *ColorButton) SetColor(color *gdk.Color) {
+func (v *ColorButton) SetColor(color *gdk3.Color) {
 	C.gtk_color_button_set_color(COLOR_BUTTON(v), (*C.GdkColor)(unsafe.Pointer(&color.GColor)))
 }
 
-func (v *ColorButton) GetColor() *gdk.Color {
-	c := new(gdk.Color)
+func (v *ColorButton) GetColor() *gdk3.Color {
+	c := new(gdk3.Color)
 	C.gtk_color_button_get_color(COLOR_BUTTON(v), (*C.GdkColor)(unsafe.Pointer(&c.GColor)))
 	return c
 }
@@ -10144,7 +10144,7 @@ type Separator struct {
 //-----------------------------------------------------------------------
 // GtkWidget
 //-----------------------------------------------------------------------
-type Allocation gdk.Rectangle
+type Allocation gdk3.Rectangle
 
 type AccelFlags int
 
@@ -10298,7 +10298,7 @@ func (v *Widget) QueueResizeNoRedraw() {
 // gtk_widget_get_child_requisition
 // gtk_widget_size_allocate
 
-func (v *Widget) AddAccelerator(signal string, group *AccelGroup, key uint, mods gdk.ModifierType, flags AccelFlags) {
+func (v *Widget) AddAccelerator(signal string, group *AccelGroup, key uint, mods gdk3.ModifierType, flags AccelFlags) {
 	csignal := C.CString(signal)
 	defer cfree(csignal)
 	C.gtk_widget_add_accelerator(v.GWidget, gstring(csignal), group.GAccelGroup, guint(key),
@@ -10359,12 +10359,12 @@ func (v *Widget) SetParent(parent IWidget) {
 	C.gtk_widget_set_parent(v.GWidget, ToNative(parent))
 }
 
-func (v *Widget) SetParentWindow(parent *gdk.Window) {
+func (v *Widget) SetParentWindow(parent *gdk3.Window) {
 	C.gtk_widget_set_parent_window(v.GWidget, C.toGdkWindow(unsafe.Pointer(parent.GWindow)))
 }
 
-func (v *Widget) GetParentWindow() *gdk.Window {
-	return gdk.WindowFromUnsafe(unsafe.Pointer(C.gtk_widget_get_parent_window(v.GWidget)))
+func (v *Widget) GetParentWindow() *gdk3.Window {
+	return gdk3.WindowFromUnsafe(unsafe.Pointer(C.gtk_widget_get_parent_window(v.GWidget)))
 }
 
 
@@ -10577,8 +10577,8 @@ func (v *Widget) SetHasTooltip(setting bool) {
 // gtk_widget_trigger_tooltip_query
 // gtk_widget_get_snapshot
 
-func (v *Widget) GetWindow() *gdk.Window {
-	return gdk.WindowFromUnsafe(unsafe.Pointer(C.gtk_widget_get_window(v.GWidget)))
+func (v *Widget) GetWindow() *gdk3.Window {
+	return gdk3.WindowFromUnsafe(unsafe.Pointer(C.gtk_widget_get_window(v.GWidget)))
 }
 
 func (v *Widget) GetAllocation() *Allocation {
@@ -10690,7 +10690,7 @@ func (v *Widget) IsToplevel() bool {
 	return gobool(C._gtk_widget_is_toplevel(v.GWidget))
 }
 
-func (v *Widget) SetWindow(window *gdk.Window) {
+func (v *Widget) SetWindow(window *gdk3.Window) {
 	panic_if_version_older(2, 18, 0, "gtk_widget_set_window()")
 	C._gtk_widget_set_window(v.GWidget, C.toGdkWindow(unsafe.Pointer(window.GWindow)))
 }
@@ -10726,19 +10726,19 @@ func (v *Widget) ModifyFontEasy(desc string) {
 	C.gtk_widget_modify_font(v.GWidget, C.pango_font_description_from_string(pdesc))
 }
 
-func (v *Widget) ModifyFG(state StateType, color *gdk.Color) {
+func (v *Widget) ModifyFG(state StateType, color *gdk3.Color) {
 	C.gtk_widget_modify_fg(v.GWidget, C.GtkStateType(state), (*C.GdkColor)(unsafe.Pointer(&color.GColor)))
 }
 
-func (v *Widget) ModifyBG(state StateType, color *gdk.Color) {
+func (v *Widget) ModifyBG(state StateType, color *gdk3.Color) {
 	C.gtk_widget_modify_bg(v.GWidget, C.GtkStateType(state), (*C.GdkColor)(unsafe.Pointer(&color.GColor)))
 }
 
-func (v *Widget) ModifyText(state StateType, color *gdk.Color) {
+func (v *Widget) ModifyText(state StateType, color *gdk3.Color) {
 	C.gtk_widget_modify_text(v.GWidget, C.GtkStateType(state), (*C.GdkColor)(unsafe.Pointer(&color.GColor)))
 }
 
-func (v *Widget) ModifyBase(state StateType, color *gdk.Color) {
+func (v *Widget) ModifyBase(state StateType, color *gdk3.Color) {
 	C.gtk_widget_modify_base(v.GWidget, C.GtkStateType(state), (*C.GdkColor)(unsafe.Pointer(&color.GColor)))
 }
 

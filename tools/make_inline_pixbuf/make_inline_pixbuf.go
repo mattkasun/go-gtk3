@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/zurek87/go-gtk3/gdkpixbuf"
-	"github.com/zurek87/go-gtk3/gtk"
+	"github.com/zurek87/go-gtk3/gtk3"
 )
 
 func main() {
@@ -14,7 +14,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	image := gtk.NewImageFromFile(os.Args[2])
+	image := gtk3.NewImageFromFile(os.Args[2])
 	pb := image.GetPixbuf()
 	if pb.GetWidth() == -1 {
 		fmt.Fprintf(os.Stderr, "ERROR: invalid pixbuf image\n")

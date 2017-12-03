@@ -6,16 +6,16 @@ package gtkgl
 // #cgo pkg-config: gtkgl-2.0
 import "C"
 
-import "github.com/zurek87/go-gtk3/gtk"
+import "github.com/zurek87/go-gtk3/gtk3"
 import "unsafe"
 
 type GLArea struct {
-	gtk.DrawingArea
+	gtk3.DrawingArea
 }
 
 func NewGLArea(attrList []int) *GLArea {
-	return &GLArea{gtk.DrawingArea{
-		*gtk.WidgetFromNative(C.make_area(C.int(len(attrList)), (*C.int)(unsafe.Pointer(&attrList[0]))))}}
+	return &GLArea{gtk3.DrawingArea{
+		*gtk3.WidgetFromNative(C.make_area(C.int(len(attrList)), (*C.int)(unsafe.Pointer(&attrList[0]))))}}
 }
 
 func (v *GLArea) MakeCurrent() {

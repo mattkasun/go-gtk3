@@ -1,9 +1,9 @@
 // +build !with-x11
 
-package gdk
+package gdk3
 
 /*
-#cgo pkg-config: gdk-3.0 gthread-2.0
+#cgo pkg-config: gdk-3.0
 #cgo CFLAGS: -x objective-c
 
 #include <gdk/gdk.h>

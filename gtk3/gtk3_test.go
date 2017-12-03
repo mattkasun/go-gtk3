@@ -1,4 +1,4 @@
-package gtk
+package gtk3
 
 import (
 	"testing"

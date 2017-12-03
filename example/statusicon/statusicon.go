@@ -3,28 +3,28 @@ package main
 import (
 	"fmt"
 	"github.com/zurek87/go-gtk3/glib"
-	"github.com/zurek87/go-gtk3/gtk"
+	"github.com/zurek87/go-gtk3/gtk3"
 	"os"
 )
 
 func main() {
-	gtk.Init(&os.Args)
+	gtk3.Init(&os.Args)
 
 	glib.SetApplicationName("go-gtk-statusicon-example")
 
-	mi := gtk.NewMenuItemWithLabel("Popup!")
+	mi := gtk3.NewMenuItemWithLabel("Popup!")
 	mi.Connect("activate", func() {
-		gtk.MainQuit()
+		gtk3.MainQuit()
 	})
-	nm := gtk.NewMenu()
+	nm := gtk3.NewMenu()
 	nm.Append(mi)
 	nm.ShowAll()
 
-	si := gtk.NewStatusIconFromStock(gtk.STOCK_FILE)
+	si := gtk3.NewStatusIconFromStock(gtk3.STOCK_FILE)
 	si.SetTitle("StatusIcon Example")
 	si.SetTooltipMarkup("StatusIcon Example")
 	si.Connect("popup-menu", func(cbx *glib.CallbackContext) {
-		nm.Popup(nil, nil, gtk.StatusIconPositionMenu, si, uint(cbx.Args(0)), uint32(cbx.Args(1)))
+		nm.Popup(nil, nil, gtk3.StatusIconPositionMenu, si, uint(cbx.Args(0)), uint32(cbx.Args(1)))
 	})
 
 	fmt.Println(`
@@ -36,5 +36,5 @@ If you don't see it and if you use 'unity', try following.
   sed -e "s/]$/, 'go-gtk-statusicon-example']/")"
 `)
 
-	gtk.Main()
+	gtk3.Main()
 }

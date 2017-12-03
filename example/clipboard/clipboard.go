@@ -2,18 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/zurek87/go-gtk3/gdk"
-	"github.com/zurek87/go-gtk3/gtk"
+	"github.com/zurek87/go-gtk3/gdk3"
+	"github.com/zurek87/go-gtk3/gtk3"
 )
 
 func main() {
-	gtk.Init(nil)
-	clipboard := gtk.NewClipboardGetForDisplay(
-		gdk.DisplayGetDefault(),
-		gdk.SELECTION_CLIPBOARD)
+	gtk3.Init(nil)
+	clipboard := gtk3.NewClipboardGetForDisplay(
+		gdk3.DisplayGetDefault(),
+		gdk3.SELECTION_CLIPBOARD)
 	fmt.Println(clipboard.WaitForText())
 	clipboard.SetText("helloworld")
-	gtk.MainIterationDo(true)
+	gtk3.MainIterationDo(true)
 	clipboard.Store()
-	gtk.MainIterationDo(true)
+	gtk3.MainIterationDo(true)
 }

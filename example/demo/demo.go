@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/zurek87/go-gtk3/gdkpixbuf"
 	"github.com/zurek87/go-gtk3/glib"
-	"github.com/zurek87/go-gtk3/gtk"
+	"github.com/zurek87/go-gtk3/gtk3"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -46,43 +46,43 @@ func authors() []string {
 }
 
 func main() {
-	gtk.Init(&os.Args)
+	gtk3.Init(&os.Args)
 
-	window := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
-	window.SetPosition(gtk.WIN_POS_CENTER)
+	window := gtk3.NewWindow(gtk3.WINDOW_TOPLEVEL)
+	window.SetPosition(gtk3.WIN_POS_CENTER)
 	window.SetTitle("GTK Go!")
 	window.SetIconName("gtk-dialog-info")
 	window.Connect("destroy", func(ctx *glib.CallbackContext) {
 		fmt.Println("got destroy!", ctx.Data().(string))
-		gtk.MainQuit()
+		gtk3.MainQuit()
 	}, "foo")
 
 	//--------------------------------------------------------
 	// GtkVBox
 	//--------------------------------------------------------
-	vbox := gtk.NewVBox(false, 1)
+	vbox := gtk3.NewVBox(false, 1)
 
 	//--------------------------------------------------------
 	// GtkMenuBar
 	//--------------------------------------------------------
-	menubar := gtk.NewMenuBar()
+	menubar := gtk3.NewMenuBar()
 	vbox.PackStart(menubar, false, false, 0)
 
 	//--------------------------------------------------------
 	// GtkVPaned
 	//--------------------------------------------------------
-	vpaned := gtk.NewVPaned()
+	vpaned := gtk3.NewVPaned()
 	vbox.Add(vpaned)
 
 	//--------------------------------------------------------
 	// GtkFrame
 	//--------------------------------------------------------
-	frame1 := gtk.NewFrame("Demo")
-	framebox1 := gtk.NewVBox(false, 1)
+	frame1 := gtk3.NewFrame("Demo")
+	framebox1 := gtk3.NewVBox(false, 1)
 	frame1.Add(framebox1)
 
-	frame2 := gtk.NewFrame("Demo")
-	framebox2 := gtk.NewVBox(false, 1)
+	frame2 := gtk3.NewFrame("Demo")
+	framebox2 := gtk3.NewVBox(false, 1)
 	frame2.Add(framebox2)
 
 	vpaned.Pack1(frame1, false, false)
@@ -94,24 +94,24 @@ func main() {
 	dir, _ := filepath.Split(os.Args[0])
 	imagefile := filepath.Join(dir, "github.com/zurek87/go-gtk3/data/go-gtk-logo.png")
 
-	label := gtk.NewLabel("Go Binding for GTK")
+	label := gtk3.NewLabel("Go Binding for GTK")
 	label.ModifyFontEasy("DejaVu Serif 15")
 	framebox1.PackStart(label, false, true, 0)
 
 	//--------------------------------------------------------
 	// GtkEntry
 	//--------------------------------------------------------
-	entry := gtk.NewEntry()
+	entry := gtk3.NewEntry()
 	entry.SetText("Hello world")
 	framebox1.Add(entry)
 
-	image := gtk.NewImageFromFile(imagefile)
+	image := gtk3.NewImageFromFile(imagefile)
 	framebox1.Add(image)
 
 	//--------------------------------------------------------
 	// GtkScale
 	//--------------------------------------------------------
-	scale := gtk.NewHScaleWithRange(0, 100, 1)
+	scale := gtk3.NewHScaleWithRange(0, 100, 1)
 	scale.Connect("value-changed", func() {
 		fmt.Println("scale:", int(scale.GetValue()))
 	})
@@ -120,19 +120,19 @@ func main() {
 	//--------------------------------------------------------
 	// GtkHBox
 	//--------------------------------------------------------
-	buttons := gtk.NewHBox(false, 1)
+	buttons := gtk3.NewHBox(false, 1)
 
 	//--------------------------------------------------------
 	// GtkButton
 	//--------------------------------------------------------
-	button := gtk.NewButtonWithLabel("Button with label")
+	button := gtk3.NewButtonWithLabel("Button with label")
 	button.Clicked(func() {
 		fmt.Println("button clicked:", button.GetLabel())
-		messagedialog := gtk.NewMessageDialog(
+		messagedialog := gtk3.NewMessageDialog(
 			button.GetTopLevelAsWindow(),
-			gtk.DIALOG_MODAL,
-			gtk.MESSAGE_INFO,
-			gtk.BUTTONS_OK,
+			gtk3.DIALOG_MODAL,
+			gtk3.MESSAGE_INFO,
+			gtk3.BUTTONS_OK,
 			entry.GetText())
 		messagedialog.Response(func() {
 			fmt.Println("Dialog OK!")
@@ -140,13 +140,13 @@ func main() {
 			//--------------------------------------------------------
 			// GtkFileChooserDialog
 			//--------------------------------------------------------
-			filechooserdialog := gtk.NewFileChooserDialog(
+			filechooserdialog := gtk3.NewFileChooserDialog(
 				"Choose File...",
 				button.GetTopLevelAsWindow(),
-				gtk.FILE_CHOOSER_ACTION_OPEN,
-				gtk.STOCK_OK,
-				gtk.RESPONSE_ACCEPT)
-			filter := gtk.NewFileFilter()
+				gtk3.FILE_CHOOSER_ACTION_OPEN,
+				gtk3.STOCK_OK,
+				gtk3.RESPONSE_ACCEPT)
+			filter := gtk3.NewFileFilter()
 			filter.AddPattern("*.go")
 			filechooserdialog.AddFilter(filter)
 			filechooserdialog.Response(func() {
@@ -163,7 +163,7 @@ func main() {
 	//--------------------------------------------------------
 	// GtkFontButton
 	//--------------------------------------------------------
-	fontbutton := gtk.NewFontButton()
+	fontbutton := gtk3.NewFontButton()
 	fontbutton.Connect("font-set", func() {
 		fmt.Println("title:", fontbutton.GetTitle())
 		fmt.Println("fontname:", fontbutton.GetFontName())
@@ -173,12 +173,12 @@ func main() {
 	buttons.Add(fontbutton)
 	framebox2.PackStart(buttons, false, false, 0)
 
-	buttons = gtk.NewHBox(false, 1)
+	buttons = gtk3.NewHBox(false, 1)
 
 	//--------------------------------------------------------
 	// GtkToggleButton
 	//--------------------------------------------------------
-	togglebutton := gtk.NewToggleButtonWithLabel("ToggleButton with label")
+	togglebutton := gtk3.NewToggleButtonWithLabel("ToggleButton with label")
 	togglebutton.Connect("toggled", func() {
 		if togglebutton.GetActive() {
 			togglebutton.SetLabel("ToggleButton ON!")
@@ -191,7 +191,7 @@ func main() {
 	//--------------------------------------------------------
 	// GtkCheckButton
 	//--------------------------------------------------------
-	checkbutton := gtk.NewCheckButtonWithLabel("CheckButton with label")
+	checkbutton := gtk3.NewCheckButtonWithLabel("CheckButton with label")
 	checkbutton.Connect("toggled", func() {
 		if checkbutton.GetActive() {
 			checkbutton.SetLabel("CheckButton CHECKED!")
@@ -204,11 +204,11 @@ func main() {
 	//--------------------------------------------------------
 	// GtkRadioButton
 	//--------------------------------------------------------
-	buttonbox := gtk.NewVBox(false, 1)
-	radiofirst := gtk.NewRadioButtonWithLabel(nil, "Radio1")
+	buttonbox := gtk3.NewVBox(false, 1)
+	radiofirst := gtk3.NewRadioButtonWithLabel(nil, "Radio1")
 	buttonbox.Add(radiofirst)
-	buttonbox.Add(gtk.NewRadioButtonWithLabel(radiofirst.GetGroup(), "Radio2"))
-	buttonbox.Add(gtk.NewRadioButtonWithLabel(radiofirst.GetGroup(), "Radio3"))
+	buttonbox.Add(gtk3.NewRadioButtonWithLabel(radiofirst.GetGroup(), "Radio2"))
+	buttonbox.Add(gtk3.NewRadioButtonWithLabel(radiofirst.GetGroup(), "Radio3"))
 	buttons.Add(buttonbox)
 	//radiobutton.SetMode(false);
 	radiofirst.SetActive(true)
@@ -218,14 +218,14 @@ func main() {
 	//--------------------------------------------------------
 	// GtkVSeparator
 	//--------------------------------------------------------
-	vsep := gtk.NewVSeparator()
+	vsep := gtk3.NewVSeparator()
 	framebox2.PackStart(vsep, false, false, 0)
 
 	//--------------------------------------------------------
 	// GtkComboBoxEntry
 	//--------------------------------------------------------
-	combos := gtk.NewHBox(false, 1)
-	comboboxentry := gtk.NewComboBoxText()
+	combos := gtk3.NewHBox(false, 1)
+	comboboxentry := gtk3.NewComboBoxText()
 	comboboxentry.AppendText("Monkey")
 	comboboxentry.AppendText("Tiger")
 	comboboxentry.AppendText("Elephant")
@@ -237,7 +237,7 @@ func main() {
 	//--------------------------------------------------------
 	// GtkComboBox
 	//--------------------------------------------------------
-	combobox := gtk.NewComboBoxText()
+	combobox := gtk3.NewComboBoxText()
 	combobox.AppendText("Peach")
 	combobox.AppendText("Banana")
 	combobox.AppendText("Apple")
@@ -252,11 +252,11 @@ func main() {
 	//--------------------------------------------------------
 	// GtkTextView
 	//--------------------------------------------------------
-	swin := gtk.NewScrolledWindow(nil, nil)
-	swin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-	swin.SetShadowType(gtk.SHADOW_IN)
-	textview := gtk.NewTextView()
-	var start, end gtk.TextIter
+	swin := gtk3.NewScrolledWindow(nil, nil)
+	swin.SetPolicy(gtk3.POLICY_AUTOMATIC, gtk3.POLICY_AUTOMATIC)
+	swin.SetShadowType(gtk3.SHADOW_IN)
+	textview := gtk3.NewTextView()
+	var start, end gtk3.TextIter
 	buffer := textview.GetBuffer()
 	buffer.GetStartIter(&start)
 	buffer.Insert(&start, "Hello ")
@@ -277,32 +277,32 @@ func main() {
 	//--------------------------------------------------------
 	// GtkMenuItem
 	//--------------------------------------------------------
-	cascademenu := gtk.NewMenuItemWithMnemonic("_File")
+	cascademenu := gtk3.NewMenuItemWithMnemonic("_File")
 	menubar.Append(cascademenu)
-	submenu := gtk.NewMenu()
+	submenu := gtk3.NewMenu()
 	cascademenu.SetSubmenu(submenu)
 
-	var menuitem *gtk.MenuItem
-	menuitem = gtk.NewMenuItemWithMnemonic("E_xit")
+	var menuitem *gtk3.MenuItem
+	menuitem = gtk3.NewMenuItemWithMnemonic("E_xit")
 	menuitem.Connect("activate", func() {
-		gtk.MainQuit()
+		gtk3.MainQuit()
 	})
 	submenu.Append(menuitem)
 
-	cascademenu = gtk.NewMenuItemWithMnemonic("_View")
+	cascademenu = gtk3.NewMenuItemWithMnemonic("_View")
 	menubar.Append(cascademenu)
-	submenu = gtk.NewMenu()
+	submenu = gtk3.NewMenu()
 	cascademenu.SetSubmenu(submenu)
 
-	checkmenuitem := gtk.NewCheckMenuItemWithMnemonic("_Disable")
+	checkmenuitem := gtk3.NewCheckMenuItemWithMnemonic("_Disable")
 	checkmenuitem.Connect("activate", func() {
 		vpaned.SetSensitive(!checkmenuitem.GetActive())
 	})
 	submenu.Append(checkmenuitem)
 
-	menuitem = gtk.NewMenuItemWithMnemonic("_Font")
+	menuitem = gtk3.NewMenuItemWithMnemonic("_Font")
 	menuitem.Connect("activate", func() {
-		fsd := gtk.NewFontSelectionDialog("Font")
+		fsd := gtk3.NewFontSelectionDialog("Font")
 		fsd.SetFontName(fontbutton.GetFontName())
 		fsd.Response(func() {
 			fmt.Println(fsd.GetFontName())
@@ -314,14 +314,14 @@ func main() {
 	})
 	submenu.Append(menuitem)
 
-	cascademenu = gtk.NewMenuItemWithMnemonic("_Help")
+	cascademenu = gtk3.NewMenuItemWithMnemonic("_Help")
 	menubar.Append(cascademenu)
-	submenu = gtk.NewMenu()
+	submenu = gtk3.NewMenu()
 	cascademenu.SetSubmenu(submenu)
 
-	menuitem = gtk.NewMenuItemWithMnemonic("_About")
+	menuitem = gtk3.NewMenuItemWithMnemonic("_About")
 	menuitem.Connect("activate", func() {
-		dialog := gtk.NewAboutDialog()
+		dialog := gtk3.NewAboutDialog()
 		dialog.SetName("Go-Gtk Demo!")
 		dialog.SetProgramName("demo")
 		dialog.SetAuthors(authors())
@@ -339,7 +339,7 @@ func main() {
 	//--------------------------------------------------------
 	// GtkStatusbar
 	//--------------------------------------------------------
-	statusbar := gtk.NewStatusbar()
+	statusbar := gtk3.NewStatusbar()
 	context_id := statusbar.GetContextId("go-gtk")
 	statusbar.Push(context_id, "GTK binding for Go!")
 
@@ -351,5 +351,5 @@ func main() {
 	window.Add(vbox)
 	window.SetSizeRequest(600, 600)
 	window.ShowAll()
-	gtk.Main()
+	gtk3.Main()
 }

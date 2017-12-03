@@ -5,35 +5,35 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/zurek87/go-gtk3/gdk"
+	"github.com/zurek87/go-gtk3/gdk3"
 	"github.com/zurek87/go-gtk3/glib"
-	"github.com/zurek87/go-gtk3/gtk"
+	"github.com/zurek87/go-gtk3/gtk3"
 )
 
 func main() {
-	gtk.Init(&os.Args)
-	window := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
+	gtk3.Init(&os.Args)
+	window := gtk3.NewWindow(gtk3.WINDOW_TOPLEVEL)
 	window.SetTitle("GTK DND")
-	window.Connect("destroy", gtk.MainQuit)
+	window.Connect("destroy", gtk3.MainQuit)
 
-	vbox := gtk.NewVBox(true, 0)
+	vbox := gtk3.NewVBox(true, 0)
 	vbox.SetBorderWidth(5)
 
-	targets := []gtk.TargetEntry{
+	targets := []gtk3.TargetEntry{
 		{"text/uri-list", 0, 0},
 		{"STRING", 0, 1},
 		{"text/plain", 0, 2},
 	}
-	dest := gtk.NewLabel("drop me file")
+	dest := gtk3.NewLabel("drop me file")
 	dest.DragDestSet(
-		gtk.DEST_DEFAULT_MOTION|
-			gtk.DEST_DEFAULT_HIGHLIGHT|
-			gtk.DEST_DEFAULT_DROP,
+		gtk3.DEST_DEFAULT_MOTION|
+			gtk3.DEST_DEFAULT_HIGHLIGHT|
+			gtk3.DEST_DEFAULT_DROP,
 		targets,
-		gdk.ACTION_COPY)
+		gdk3.ACTION_COPY)
 	dest.DragDestAddUriTargets()
 	dest.Connect("drag-data-received", func(ctx *glib.CallbackContext) {
-		sdata := gtk.NewSelectionDataFromNative(unsafe.Pointer(ctx.Args(3)))
+		sdata := gtk3.NewSelectionDataFromNative(unsafe.Pointer(ctx.Args(3)))
 		if sdata != nil {
 			a := (*[2000]uint8)(sdata.GetData())
 			files := strings.Split(string(a[0:sdata.GetLength()-1]), "\n")
@@ -41,11 +41,11 @@ func main() {
 				filename, _, _ := glib.FilenameFromUri(files[i])
 				files[i] = filename
 			}
-			dialog := gtk.NewMessageDialog(
+			dialog := gtk3.NewMessageDialog(
 				window,
-				gtk.DIALOG_MODAL,
-				gtk.MESSAGE_INFO,
-				gtk.BUTTONS_OK,
+				gtk3.DIALOG_MODAL,
+				gtk3.MESSAGE_INFO,
+				gtk3.BUTTONS_OK,
 				strings.Join(files, "\n"))
 			dialog.SetTitle("D&D")
 			dialog.Response(func() {
@@ -60,5 +60,5 @@ func main() {
 
 	window.SetSizeRequest(300, 100)
 	window.ShowAll()
-	gtk.Main()
+	gtk3.Main()
 }

@@ -16,7 +16,7 @@ import (
 
 	"github.com/garyburd/go-oauth/oauth"
 	"github.com/zurek87/go-gtk3/gdkpixbuf"
-	"github.com/zurek87/go-gtk3/gtk"
+	"github.com/zurek87/go-gtk3/gtk3"
 )
 
 var (
@@ -137,8 +137,8 @@ func post(client *oauth.Client, cred *oauth.Credentials, s string) {
 	}
 }
 
-func display(t *tweet, buffer *gtk.TextBuffer, tag *gtk.TextTag) {
-	var iter gtk.TextIter
+func display(t *tweet, buffer *gtk3.TextBuffer, tag *gtk3.TextTag) {
+	var iter gtk3.TextIter
 	pixbufbytes, resp := readURL(t.User.ProfileImageUrl)
 	buffer.GetStartIter(&iter)
 	if resp != nil {
@@ -147,7 +147,7 @@ func display(t *tweet, buffer *gtk.TextBuffer, tag *gtk.TextTag) {
 	buffer.Insert(&iter, " ")
 	buffer.InsertWithTag(&iter, t.User.ScreenName, tag)
 	buffer.Insert(&iter, ":"+t.Text+"\n")
-	gtk.MainIterationDo(false)
+	gtk3.MainIterationDo(false)
 }
 
 func show(client *oauth.Client, cred *oauth.Credentials, f func(t *tweet)) {
@@ -186,15 +186,15 @@ func main() {
 	cred := &oauth.Credentials{config["AccessToken"], config["AccessSecret"]}
 
 	runtime.LockOSThread()
-	gtk.Init(&os.Args)
-	window := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
+	gtk3.Init(&os.Args)
+	window := gtk3.NewWindow(gtk3.WINDOW_TOPLEVEL)
 	window.SetTitle("Twitter!")
-	window.Connect("destroy", gtk.MainQuit)
+	window.Connect("destroy", gtk3.MainQuit)
 
-	vbox := gtk.NewVBox(false, 1)
+	vbox := gtk3.NewVBox(false, 1)
 
-	scrolledwin := gtk.NewScrolledWindow(nil, nil)
-	textview := gtk.NewTextView()
+	scrolledwin := gtk3.NewScrolledWindow(nil, nil)
+	textview := gtk3.NewTextView()
 	textview.SetEditable(false)
 	textview.SetCursorVisible(false)
 	scrolledwin.Add(textview)
@@ -203,12 +203,12 @@ func main() {
 	buffer := textview.GetBuffer()
 	tag := buffer.CreateTag("blue", map[string]string{"foreground": "#0000FF", "weight": "700"})
 
-	hbox := gtk.NewHBox(false, 1)
+	hbox := gtk3.NewHBox(false, 1)
 	vbox.PackEnd(hbox, false, true, 5)
 
-	label := gtk.NewLabel("Tweet")
+	label := gtk3.NewLabel("Tweet")
 	hbox.PackStart(label, false, false, 5)
-	text := gtk.NewEntry()
+	text := gtk3.NewEntry()
 	hbox.PackEnd(text, true, true, 5)
 
 	text.Connect("activate", func() {
@@ -233,7 +233,7 @@ func main() {
 		stream(client, cred, func(t *tweet) {
 			mutex.Lock()
 			display(t, buffer, tag)
-			var start, end gtk.TextIter
+			var start, end gtk3.TextIter
 			buffer.GetIterAtLine(&start, buffer.GetLineCount()-2)
 			buffer.GetEndIter(&end)
 			buffer.Delete(&start, &end)
@@ -243,7 +243,7 @@ func main() {
 
 	for alive {
 		mutex.Lock()
-		alive = gtk.MainIterationDo(false)
+		alive = gtk3.MainIterationDo(false)
 		mutex.Unlock()
 	}
 }

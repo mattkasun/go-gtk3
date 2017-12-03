@@ -3,24 +3,24 @@ package main
 import (
 	"fmt"
 	"github.com/zurek87/go-gtk3/glib"
-	"github.com/zurek87/go-gtk3/gtk"
+	"github.com/zurek87/go-gtk3/gtk3"
 	"os"
 	"strconv"
 	"unsafe"
 )
 
 func main() {
-	gtk.Init(&os.Args)
+	gtk3.Init(&os.Args)
 
-	dialog := gtk.NewDialog()
+	dialog := gtk3.NewDialog()
 	dialog.SetTitle("number input")
 
 	vbox := dialog.GetVBox()
 
-	label := gtk.NewLabel("Numnber:")
+	label := gtk3.NewLabel("Numnber:")
 	vbox.Add(label)
 
-	input := gtk.NewEntry()
+	input := gtk3.NewEntry()
 	input.SetEditable(true)
 	vbox.Add(input)
 
@@ -44,13 +44,13 @@ func main() {
 		}
 	})
 
-	button := gtk.NewButtonWithLabel("OK")
+	button := gtk3.NewButtonWithLabel("OK")
 	button.Connect("clicked", func() {
 		fmt.Println(input.GetText())
-		gtk.MainQuit()
+		gtk3.MainQuit()
 	})
 	vbox.Add(button)
 
 	dialog.ShowAll()
-	gtk.Main()
+	gtk3.Main()
 }

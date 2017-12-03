@@ -1,24 +1,24 @@
 package main
 
 import (
-	"github.com/zurek87/go-gtk3/gtk"
+	"github.com/zurek87/go-gtk3/gtk3"
 	gsv "github.com/zurek87/go-gtk3/gtksourceview"
 	"os"
 )
 
 func main() {
-	gtk.Init(&os.Args)
-	window := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
+	gtk3.Init(&os.Args)
+	window := gtk3.NewWindow(gtk3.WINDOW_TOPLEVEL)
 	window.SetTitle("SourceView")
-	window.Connect("destroy", gtk.MainQuit)
+	window.Connect("destroy", gtk3.MainQuit)
 
-	swin := gtk.NewScrolledWindow(nil, nil)
-	swin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-	swin.SetShadowType(gtk.SHADOW_IN)
+	swin := gtk3.NewScrolledWindow(nil, nil)
+	swin.SetPolicy(gtk3.POLICY_AUTOMATIC, gtk3.POLICY_AUTOMATIC)
+	swin.SetShadowType(gtk3.SHADOW_IN)
 	sourcebuffer := gsv.NewSourceBufferWithLanguage(gsv.SourceLanguageManagerGetDefault().GetLanguage("cpp"))
 	sourceview := gsv.NewSourceViewWithBuffer(sourcebuffer)
 
-	var start gtk.TextIter
+	var start gtk3.TextIter
 	sourcebuffer.GetStartIter(&start)
 	sourcebuffer.BeginNotUndoableAction()
 	sourcebuffer.Insert(&start, `#include <iostream>
@@ -57,5 +57,5 @@ int main(void) {
 	window.SetSizeRequest(400, 300)
 	window.ShowAll()
 
-	gtk.Main()
+	gtk3.Main()
 }

@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/zurek87/go-gtk3/gtk"
+	"github.com/zurek87/go-gtk3/gtk3"
 	"os"
 )
 
-func createArrowButton(at gtk.ArrowType, st gtk.ShadowType) *gtk.Button {
-	b := gtk.NewButton()
-	a := gtk.NewArrow(at, st)
+func createArrowButton(at gtk3.ArrowType, st gtk3.ShadowType) *gtk3.Button {
+	b := gtk3.NewButton()
+	a := gtk3.NewArrow(at, st)
 
 	b.Add(a)
 
@@ -18,20 +18,20 @@ func createArrowButton(at gtk.ArrowType, st gtk.ShadowType) *gtk.Button {
 }
 
 func main() {
-	gtk.Init(&os.Args)
+	gtk3.Init(&os.Args)
 
-	window := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
+	window := gtk3.NewWindow(gtk3.WINDOW_TOPLEVEL)
 	window.SetTitle("Arrow Buttons")
-	window.Connect("destroy", gtk.MainQuit)
+	window.Connect("destroy", gtk3.MainQuit)
 
-	box := gtk.NewHBox(false, 0)
+	box := gtk3.NewHBox(false, 0)
 	box.Show()
 	window.Add(box)
 
-	up := createArrowButton(gtk.ARROW_UP, gtk.SHADOW_IN)
-	down := createArrowButton(gtk.ARROW_DOWN, gtk.SHADOW_OUT)
-	left := createArrowButton(gtk.ARROW_LEFT, gtk.SHADOW_ETCHED_IN)
-	right := createArrowButton(gtk.ARROW_RIGHT, gtk.SHADOW_ETCHED_OUT)
+	up := createArrowButton(gtk3.ARROW_UP, gtk3.SHADOW_IN)
+	down := createArrowButton(gtk3.ARROW_DOWN, gtk3.SHADOW_OUT)
+	left := createArrowButton(gtk3.ARROW_LEFT, gtk3.SHADOW_ETCHED_IN)
+	right := createArrowButton(gtk3.ARROW_RIGHT, gtk3.SHADOW_ETCHED_OUT)
 
 	box.PackStart(up, false, false, 3)
 	box.PackStart(down, false, false, 3)
@@ -44,5 +44,5 @@ func main() {
 	right.Clicked(func() { println("→") })
 
 	window.Show()
-	gtk.Main()
+	gtk3.Main()
 }

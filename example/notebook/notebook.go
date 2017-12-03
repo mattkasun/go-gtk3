@@ -1,31 +1,31 @@
 package main
 
 import (
-	"github.com/zurek87/go-gtk3/gtk"
+	"github.com/zurek87/go-gtk3/gtk3"
 	"os"
 	"strconv"
 )
 
 func main() {
-	gtk.Init(&os.Args)
-	window := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
+	gtk3.Init(&os.Args)
+	window := gtk3.NewWindow(gtk3.WINDOW_TOPLEVEL)
 	window.SetTitle("GTK Notebook")
-	window.Connect("destroy", gtk.MainQuit)
+	window.Connect("destroy", gtk3.MainQuit)
 
-	notebook := gtk.NewNotebook()
+	notebook := gtk3.NewNotebook()
 	for n := 1; n <= 10; n++ {
-		page := gtk.NewFrame("demo" + strconv.Itoa(n))
-		notebook.AppendPage(page, gtk.NewLabel("demo"+strconv.Itoa(n)))
+		page := gtk3.NewFrame("demo" + strconv.Itoa(n))
+		notebook.AppendPage(page, gtk3.NewLabel("demo"+strconv.Itoa(n)))
 
-		vbox := gtk.NewHBox(false, 1)
+		vbox := gtk3.NewHBox(false, 1)
 
-		prev := gtk.NewButtonWithLabel("go prev")
+		prev := gtk3.NewButtonWithLabel("go prev")
 		prev.Clicked(func() {
 			notebook.PrevPage()
 		})
 		vbox.Add(prev)
 
-		next := gtk.NewButtonWithLabel("go next")
+		next := gtk3.NewButtonWithLabel("go next")
 		next.Clicked(func() {
 			notebook.NextPage()
 		})
@@ -38,5 +38,5 @@ func main() {
 	window.SetSizeRequest(400, 200)
 	window.ShowAll()
 
-	gtk.Main()
+	gtk3.Main()
 }
