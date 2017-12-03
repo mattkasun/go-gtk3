@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"../../glib"
-	"../../gtk"
+	"github.com/zurek87/go-gtk/glib"
+	"github.com/zurek87/go-gtk/gtk"
 	"os"
 	"strconv"
 	"unsafe"

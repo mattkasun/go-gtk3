@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"../../gtk"
+	"github.com/zurek87/go-gtk/gtk"
 	"os"
 )
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"../../glib"
+	"github.com/zurek87/go-gtk/glib"
 )
 
 func main() {

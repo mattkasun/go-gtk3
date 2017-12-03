@@ -1,9 +1,9 @@
 package main
 
 import (
-	"../../gdkpixbuf"
-	"../../glib"
-	"../../gtk"
+	"github.com/zurek87/go-gtk/gdkpixbuf"
+	"github.com/zurek87/go-gtk/glib"
+	"github.com/zurek87/go-gtk/gtk"
 	"os"
 	"strconv"
 )

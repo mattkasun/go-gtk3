@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"../../gdkpixbuf"
-	"../../glib"
-	"../../gtk"
+	"github.com/zurek87/go-gtk/gdkpixbuf"
+	"github.com/zurek87/go-gtk/glib"
+	"github.com/zurek87/go-gtk/gtk"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -92,7 +92,7 @@ func main() {
 	// GtkImage
 	//--------------------------------------------------------
 	dir, _ := filepath.Split(os.Args[0])
-	imagefile := filepath.Join(dir, "../../data/go-gtk-logo.png")
+	imagefile := filepath.Join(dir, "github.com/zurek87/go-gtk/data/go-gtk-logo.png")
 
 	label := gtk.NewLabel("Go Binding for GTK")
 	label.ModifyFontEasy("DejaVu Serif 15")

@@ -3,11 +3,11 @@ package main
 import (
 	"os"
 
-	"../../example/builder/callback"
-	"../../gtk"
+	"github.com/zurek87/go-gtk/example/builder/callback"
+	"github.com/zurek87/go-gtk/gtk"
 )
 
-//"../../example/builder/callback"
+//"github.com/zurek87/go-gtk/example/builder/callback"
 func main() {
 	gtk.Init(&os.Args)
 

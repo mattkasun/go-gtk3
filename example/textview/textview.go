@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"../../gdk"
-	"../../glib"
-	"../../gtk"
+	"github.com/zurek87/go-gtk/gdk"
+	"github.com/zurek87/go-gtk/glib"
+	"github.com/zurek87/go-gtk/gtk"
 	"unsafe"
 )
 

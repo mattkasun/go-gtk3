@@ -1,8 +1,8 @@
 package main
 
 import (
-	"../../gtk"
-	gsv "../../gtksourceview"
+	"github.com/zurek87/go-gtk/gtk"
+	gsv "github.com/zurek87/go-gtk/gtksourceview"
 	"os"
 )
 
