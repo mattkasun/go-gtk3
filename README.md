@@ -47,3 +47,29 @@ Priority is to run: `/example/demo/demo.go`
 | GtkFixed          | 3 / 3 |
 
 
+# Legacy
+
+
+`go-gtk` code authors:
+
+    Yasuhiro Matsumoto
+
+    David Roundy
+    Mark Andrew Gerads
+    Tobias Kortkamp
+    Mikhail Trushnikov
+    Federico Sogaro
+    Crazy2be
+    Daniël de Kok
+    Erik Lissel
+    Jeffrey Bolle
+    Leonhard Küper
+    Matt Joiner
+    SQP
+    Steven T
+    Taru Karttunen
+    Utkan Güngördü
+    matiaslina
+    Dag Robøle
+    Denis Dyakov
+    Giuseppe Mazzotta
