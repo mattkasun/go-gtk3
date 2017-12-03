@@ -1,6 +1,6 @@
 # go-gtk3
 
-Based on [go-gtk](https://github.com/mattn/go-gtk) (supports gtk2): revrited and upgraded to use gtk3.
+Based on [go-gtk](https://github.com/mattn/go-gtk) (supports gtk2): refactored and upgraded to use gtk3.
 
 
 ### Minimal Support of gtk3 and gdk3 on linux!
