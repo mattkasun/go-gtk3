@@ -5,7 +5,7 @@ package gtk
 import (
 	"unsafe"
 
-	"../gdk"
+	"github.com/zurek87/go-gtk/gdk"
 )
 
 func (v *Window) XID() int32 {
