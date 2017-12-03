@@ -30,3 +30,5 @@ example/thread/thread
 example/toolbar/toolbar
 example/treeview/treeview
 example/twitterstream/twitterstream
+
+.idea/
