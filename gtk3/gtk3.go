@@ -731,56 +731,6 @@ func StockListIDs() *glib.SList {
 // gtk_icon_source_set_state
 // gtk_icon_source_set_state_wildcarded
 
-//-----------------------------------------------------------------------
-// Resource Files
-//-----------------------------------------------------------------------
-
-// gtk_rc_scanner_new
-// gtk_rc_get_style
-// gtk_rc_get_style_by_paths
-// gtk_rc_add_widget_name_style
-// gtk_rc_add_widget_class_style
-// gtk_rc_add_class_style
-
-func RCParse(file string) {
-	ptr := C.CString(file)
-	defer cfree(ptr)
-	C.gtk_rc_parse((*C.gchar)(ptr))
-}
-
-func RCParseString(style string) {
-	ptr := C.CString(style)
-	defer cfree(ptr)
-	C.gtk_rc_parse_string((*C.gchar)(ptr))
-}
-
-func RCReparseAll() bool {
-	return gobool(C.gtk_rc_reparse_all())
-}
-
-// gtk_rc_reparse_all_for_settings
-
-func RCResetStyles(settings *Settings) {
-	C.gtk_rc_reset_styles(settings.GSettings)
-}
-
-// gtk_rc_add_default_file
-// gtk_rc_get_default_files
-// gtk_rc_set_default_files
-// gtk_rc_parse_color
-// gtk_rc_parse_color_full
-// gtk_rc_parse_state
-// gtk_rc_parse_priority
-// gtk_rc_find_module_in_path
-// gtk_rc_find_pixmap_in_path
-// gtk_rc_get_module_dir
-// gtk_rc_get_im_module_path
-// gtk_rc_get_im_module_file
-// gtk_rc_get_theme_dir
-// gtk_rc_style_new
-// gtk_rc_style_copy
-// gtk_rc_style_ref
-// gtk_rc_style_unref
 
 //-----------------------------------------------------------------------
 // GtkSettings
@@ -863,105 +813,6 @@ func (s *Settings) SetDoubleProperty(name string, v_double float64, origin strin
 
 // gtk_gc_get
 // gtk_gc_release
-
-//-----------------------------------------------------------------------
-// GtkStyle
-//-----------------------------------------------------------------------
-
-type Style struct {
-	GStyle *C.GtkStyle
-}
-
-func NewStyle() *Style {
-	return &Style{C.gtk_style_new()}
-}
-
-func (v *Style) Copy() *Style {
-	return &Style{C.gtk_style_copy(STYLE(v))}
-}
-
-func (v *Style) Attach(window *Window) *Style {
-	return &Style{C.gtk_style_attach(STYLE(v), C.toGdkWindow(unsafe.Pointer(window)))}
-}
-
-func (v *Style) Detach() {
-	C.gtk_style_detach(STYLE(v))
-}
-
-func (v *Style) SetBackground(window *Window, state StateType) {
-	C.gtk_style_set_background(STYLE(v), C.toGdkWindow(unsafe.Pointer(window)), C.GtkStateType(state))
-}
-
-// gtk_style_apply_default_background
-
-func (v *Style) LookupColor(colorName string) (*gdk3.Color, bool) {
-	color_name := C.CString(colorName)
-	defer cfree(color_name)
-	color := new(gdk3.Color)
-	b := C.gtk_style_lookup_color(v.GStyle, gstring(color_name), (*C.GdkColor)(unsafe.Pointer(&color.GColor)))
-	return color, gobool(b)
-}
-
-// gtk_style_lookup_icon_set
-// gtk_style_render_icon
-// gtk_style_get_style_property
-
-// gtk_style_get_valist
-// gtk_style_get
-// gtk_paint_arrow
-// gtk_paint_box
-// gtk_paint_box_gap
-// gtk_paint_check
-// gtk_paint_diamond
-// gtk_paint_extension
-// gtk_paint_flat_box
-// gtk_paint_focus
-// gtk_paint_handle
-// gtk_paint_hline
-// gtk_paint_option
-// gtk_paint_polygon
-// gtk_paint_shadow
-// gtk_paint_shadow_gap
-// gtk_paint_slider
-// gtk_paint_spinner
-// gtk_paint_tab
-// gtk_paint_vline
-// gtk_paint_expander
-// gtk_paint_layout
-// gtk_paint_resize_grip
-// gtk_draw_insertion_cursor
-// gtk_border_new
-// gtk_border_copy
-// gtk_border_free
-
-// Deprecated:
-// gtk_style_ref
-// gtk_style_unref
-// gtk_style_apply_default_pixmap
-// gtk_style_get_font
-// gtk_style_set_font
-// gtk_draw_hline
-// gtk_draw_vline
-// gtk_draw_shadow
-// gtk_draw_polygon
-// gtk_draw_arrow
-// gtk_draw_diamond
-// gtk_draw_string
-// gtk_draw_box
-// gtk_draw_box_gap
-// gtk_draw_check
-// gtk_draw_extension
-// gtk_draw_flat_box
-// gtk_draw_focus
-// gtk_draw_handle
-// gtk_draw_option
-// gtk_draw_shadow_gap
-// gtk_draw_slider
-// gtk_draw_tab
-// gtk_draw_expander
-// gtk_draw_layout
-// gtk_draw_resize_grip
-// gtk_paint_string
 
 //-----------------------------------------------------------------------
 // Selections
@@ -3436,28 +3287,6 @@ func (v *EntryCompletion) GetPopupSingleMatch() bool {
 	return gobool(C.gtk_entry_completion_get_popup_single_match(v.GEntryCompletion))
 }
 
-//-----------------------------------------------------------------------
-// GtkHScale
-//-----------------------------------------------------------------------
-func NewHScale(adjustment *Adjustment) *Scale {
-	return &Scale{Range{Widget{C.gtk_hscale_new(adjustment.GAdjustment)}}}
-}
-
-func NewHScaleWithRange(min, max, step float64) *Scale {
-	return &Scale{Range{Widget{
-		C.gtk_hscale_new_with_range(gdouble(min), gdouble(max), gdouble(step))}}}
-}
-
-//-----------------------------------------------------------------------
-// GtkVScale
-//-----------------------------------------------------------------------
-func NewVScale(a *Adjustment) *Scale {
-	return &Scale{Range{Widget{C.gtk_vscale_new(a.GAdjustment)}}}
-}
-
-func NewVScaleWithRange(min, max, step float64) *Scale {
-	return &Scale{Range{Widget{C.gtk_vscale_new_with_range(gdouble(min), gdouble(max), gdouble(step))}}}
-}
 
 //-----------------------------------------------------------------------
 // GtkSpinButton
@@ -6493,17 +6322,7 @@ func NewSeparatorMenuItem() *SeparatorMenuItem {
 		C.gtk_separator_menu_item_new())}
 }
 
-//-----------------------------------------------------------------------
-// GtkTearoffMenuItem
-//-----------------------------------------------------------------------
-type TearoffMenuItem struct {
-	MenuItem
-}
 
-func NewTearoffMenuItem() *TearoffMenuItem {
-	return &TearoffMenuItem{*newMenuItemInternal(
-		C.gtk_tearoff_menu_item_new())}
-}
 
 //-----------------------------------------------------------------------
 // GtkToolShell
@@ -7767,52 +7586,6 @@ func (v *ColorButton) GetTitle() string {
 }
 
 //-----------------------------------------------------------------------
-// GtkColorSelectionDialog
-//-----------------------------------------------------------------------
-
-// gtk_color_selection_dialog_new
-// gtk_color_selection_dialog_get_color_selection
-
-//-----------------------------------------------------------------------
-// GtkColorSelection
-//-----------------------------------------------------------------------
-
-// gtk_color_selection_new
-// gtk_color_selection_set_update_policy
-// gtk_color_selection_set_has_opacity_control
-// gtk_color_selection_get_has_opacity_control
-// gtk_color_selection_set_has_palette
-// gtk_color_selection_get_has_palette
-// gtk_color_selection_get_current_alpha
-// gtk_color_selection_set_current_alpha
-// gtk_color_selection_get_current_color
-// gtk_color_selection_set_current_color
-// gtk_color_selection_get_previous_alpha
-// gtk_color_selection_set_previous_alpha
-// gtk_color_selection_get_previous_color
-// gtk_color_selection_set_previous_color
-// gtk_color_selection_is_adjusting
-// gtk_color_selection_palette_from_string
-// gtk_color_selection_palette_to_string
-// gtk_color_selection_set_change_palette_hook
-// gtk_color_selection_set_change_palette_with_screen_hook
-// gtk_color_selection_set_color
-// gtk_color_selection_get_color
-
-//-----------------------------------------------------------------------
-// GtkHSV
-//-----------------------------------------------------------------------
-
-// gtk_hsv_new
-// gtk_hsv_set_color
-// gtk_hsv_get_color
-// gtk_hsv_set_metrics
-// gtk_hsv_get_metrics
-// gtk_hsv_is_adjusting
-// gtk_hsv_to_rgb
-// gtk_rgb_to_hsv
-
-//-----------------------------------------------------------------------
 // GtkFileChooser
 //-----------------------------------------------------------------------
 type FileChooserAction int
@@ -8136,84 +7909,6 @@ func (v *FontButton) GetTitle() string {
 	return gostring(C.gtk_font_button_get_title(FONT_BUTTON(v)))
 }
 
-//-----------------------------------------------------------------------
-// GtkFontSelection
-//-----------------------------------------------------------------------
-type FontSelection struct {
-	VBox
-}
-
-func NewFontSelection() *FontSelection {
-	return &FontSelection{VBox{Box{Container{Widget{C.gtk_font_selection_new()}}}}}
-}
-
-func (v *FontSelection) GetFontName() string {
-	return gostring(C.gtk_font_selection_get_font_name(FONT_SELECTION(v)))
-}
-
-func (v *FontSelection) SetFontName(name string) {
-	ptr := C.CString(name)
-	defer cfree(ptr)
-	C.gtk_font_selection_set_font_name(FONT_SELECTION(v), gstring(ptr))
-}
-
-// gtk_font_selection_get_preview_text
-// gtk_font_selection_set_preview_text
-// gtk_font_selection_get_face
-// gtk_font_selection_get_face_list
-// gtk_font_selection_get_family
-// gtk_font_selection_get_size
-// gtk_font_selection_get_family_list
-// gtk_font_selection_get_preview_entry
-// gtk_font_selection_get_size_entry
-// gtk_font_selection_get_size_list
-
-//-----------------------------------------------------------------------
-// GtkFontSelectionDialog
-//-----------------------------------------------------------------------
-type FontSelectionDialog struct {
-	Dialog
-}
-
-func NewFontSelectionDialog(title string) *FontSelectionDialog {
-	ptitle := C.CString(title)
-	defer cfree(ptitle)
-	return &FontSelectionDialog{Dialog{Window{Bin{Container{Widget{
-		C.gtk_font_selection_dialog_new(gstring(ptitle))}}}}, nil}}
-}
-
-func (v *FontSelectionDialog) GetFontName() string {
-	return gostring(C.gtk_font_selection_dialog_get_font_name(FONT_SELECTION_DIALOG(v)))
-}
-
-func (v *FontSelectionDialog) SetFontName(font string) {
-	pfont := C.CString(font)
-	defer cfree(pfont)
-	C.gtk_font_selection_dialog_set_font_name(FONT_SELECTION_DIALOG(v), gstring(pfont))
-}
-
-func (v *FontSelectionDialog) GetPreviewText() string {
-	return gostring(C.gtk_font_selection_dialog_get_preview_text(FONT_SELECTION_DIALOG(v)))
-}
-
-func (v *FontSelectionDialog) SetPreviewText(text string) {
-	ptr := C.CString(text)
-	defer cfree(ptr)
-	C.gtk_font_selection_dialog_set_preview_text(FONT_SELECTION_DIALOG(v), gstring(ptr))
-}
-
-func (v *FontSelectionDialog) GetCancelButton() *Widget {
-	return &Widget{C.gtk_font_selection_dialog_get_cancel_button(FONT_SELECTION_DIALOG(v))}
-}
-
-func (v *FontSelectionDialog) GetOkButton() *Widget {
-	return &Widget{C.gtk_font_selection_dialog_get_ok_button(FONT_SELECTION_DIALOG(v))}
-}
-
-func (v *FontSelectionDialog) GetFontSelection() *FontSelection {
-	return &FontSelection{VBox{Box{Container{Widget{
-		C.gtk_font_selection_dialog_get_font_selection(FONT_SELECTION_DIALOG(v))}}}}}
-}
 
 //-----------------------------------------------------------------------
 // GtkInputDialog
