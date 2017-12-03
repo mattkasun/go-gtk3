@@ -1,7 +1,6 @@
 # go-gtk3
 
-
-Fork from:
+Based on `go-gtk` that supports gtk2:
 https://github.com/mattn/go-gtk and upgraded to use gtk3
 
 
@@ -48,7 +47,6 @@ Priority is to run: `/example/demo/demo.go`
 
 
 # Legacy
-
 
 `go-gtk` code authors:
 
