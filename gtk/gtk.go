@@ -16,10 +16,10 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/zurek87/go-gtk/gdk"
-	"github.com/zurek87/go-gtk/gdkpixbuf"
-	"github.com/zurek87/go-gtk/glib"
-	"github.com/zurek87/go-gtk/pango"
+	"github.com/zurek87/go-gtk3/gdk"
+	"github.com/zurek87/go-gtk3/gdkpixbuf"
+	"github.com/zurek87/go-gtk3/glib"
+	"github.com/zurek87/go-gtk3/pango"
 	"github.com/mattn/go-pointer"
 )
 

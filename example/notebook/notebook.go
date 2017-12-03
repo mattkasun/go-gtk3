@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/zurek87/go-gtk/gtk"
+	"github.com/zurek87/go-gtk3/gtk"
 	"os"
 	"strconv"
 )

@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/zurek87/go-gtk/gdk"
-	"github.com/zurek87/go-gtk/gtk"
+	"github.com/zurek87/go-gtk3/gdk"
+	"github.com/zurek87/go-gtk3/gtk"
 )
 
 func main() {
