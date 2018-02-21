@@ -153,6 +153,7 @@ func ACTIVATABLE(p *Activatable) *C.GtkActivatable         { return C.toGActivat
 func AS_GWIDGET(p unsafe.Pointer) *C.GtkWidget             { return C.toGWidget(p) }
 func UI_MANAGER(p *UIManager) *C.GtkUIManager              { return C.toGUIManager(p.Object) }
 func FONT_SELECTION(p *FontSelection) *C.GtkFontSelection  { return C.toGFontSelection(p.GWidget) }
+//func OVERLAY(p *Overlay) *C.GtkOverlay                     { return C.toGOverlay(p.GWidget) }
 
 //static inline GtkFileFilter* toGFileFilter(gpointer p) { return GTK_FILE_FILTER(p); }
 
@@ -9908,6 +9909,10 @@ func (v *Widget) ModifyText(state StateType, color *gdk3.Color) {
 
 func (v *Widget) ModifyBase(state StateType, color *gdk3.Color) {
 	C.gtk_widget_modify_base(v.GWidget, C.GtkStateType(state), (*C.GdkColor)(unsafe.Pointer(&color.GColor)))
+}
+
+func (v *Widget) SetOpacity (o float64) {
+	C.gtk_widget_set_opacity(WIDGET(v), C.double(o))
 }
 
 //-----------------------------------------------------------------------
