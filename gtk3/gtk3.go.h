@@ -176,6 +176,13 @@ static void _gtk_tree_sortable_set_sort_func(GtkTreeSortable* ts, gint col, void
 	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(ts), col, sortable_sort_func, (gpointer) gsfi, free_sort_func);
 }
 
+static void _gtk_tree_sortable_set_default_sort_func(GtkTreeSortable* ts, void* gots) {
+	_gtk_sort_func_info* gsfi = malloc(sizeof(_gtk_sort_func_info));
+	gsfi->columnNum = GTK_TREE_SORTABLE_DEFAULT_SORT_COLUMN_ID;
+	gsfi->gots = gots;
+	gtk_tree_sortable_set_default_sort_func(GTK_TREE_SORTABLE(ts), sortable_sort_func, (gpointer) gsfi, free_sort_func);
+}
+
 extern void _go_gtk_builder_connect_signals_full_cb(void*  builder, void* object, gchar *signal_name, gchar *handler_name, void* connect_object, int flags, void* user_data);
 static void _gtk_builder_connect_signals_full(GtkBuilder *builder, void* user_data) {
   gtk_builder_connect_signals_full(builder, (GtkBuilderConnectFunc)_go_gtk_builder_connect_signals_full_cb, user_data);
@@ -261,6 +268,15 @@ static inline void set_string(gchar** strings, int n, gchar* str) {
 
 static GSList* to_gslist(void* gs) {
 	return (GSList*)gs;
+}
+
+static void _g_slist_string_full_free(GSList* gs) {
+    GSList* l;
+
+    for(l = gs; l != NULL; l = l->next) {
+        g_free(l->data);
+    }
+    g_slist_free(gs);
 }
 
 static int _check_version(int major, int minor, int micro) {

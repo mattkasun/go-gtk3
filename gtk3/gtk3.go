@@ -36,6 +36,28 @@ func gstring(s *C.char) *C.gchar { return C.toGstr(s) }
 func cstring(s *C.gchar) *C.char { return C.toCstr(s) }
 func gostring(s *C.gchar) string { return C.GoString(cstring(s)) }
 
+func gostringAndFree(s *C.gchar) string {
+	gos := C.GoString(cstring(s))
+	C.g_free(C.gpointer(s))
+	return gos
+}
+
+func gslist2StringArray(ss *C.GSList) []string {
+	slist := glib.SListFromNative(unsafe.Pointer(ss))
+	res := make([]string, slist.Length())
+	for i := uint(0); i < slist.Length(); i++ {
+		res[i] = C.GoString((*C.char)(slist.NthData(i)))
+	}
+	return res
+}
+
+func gslist2StringArrayAndFree(ss *C.GSList) []string {
+	res := gslist2StringArray(ss)
+	C._g_slist_string_full_free(ss)
+	return res
+}
+
+
 func gslist(l *glib.SList) *C.GSList {
 	if l == nil {
 		return nil
@@ -96,9 +118,7 @@ func TEXT_VIEW(p *TextView) *C.GtkTextView                 { return C.toGTextVie
 func TEXT_BUFFER(p unsafe.Pointer) *C.GtkTextBuffer        { return C.toGTextBuffer(p) }
 func TEXT_TAG(p unsafe.Pointer) *C.GtkTextTag              { return C.toGTextTag(p) }
 func MENU(p *Menu) *C.GtkMenu                              { return C.toGMenu(p.GWidget) }
-func MENU_BAR(p *MenuBar) *C.GtkMenuBar                    { return C.toGMenuBar(p.GWidget) }
-func MENU_SHELL(p *Menu) *C.GtkMenuShell                   { return C.toGMenuShell(p.GWidget) } // TODO (GtkMenuShell receiver)
-func MENU_BAR_SHELL(p *MenuBar) *C.GtkMenuShell            { return C.toGMenuShell(p.GWidget) } // TODO
+func MENU_SHELL(p *MenuShell) *C.GtkMenuShell              { return C.toGMenuShell(p.GWidget) }
 func MENU_ITEM(p *MenuItem) *C.GtkMenuItem                 { return C.toGMenuItem(p.GWidget) }
 func TOOLBAR(p *Toolbar) *C.GtkToolbar                     { return C.toGToolbar(p.GWidget) }
 func TOOL_ITEM(p *ToolItem) *C.GtkToolItem                 { return C.toGToolItem(p.GWidget) }
@@ -210,6 +230,30 @@ func argumentPanic(message string) {
 	} else {
 		log.Panicln("Arguments error: (unknown caller, see stack):", message)
 	}
+}
+
+func native2StringArray(native **C.gchar) []string{
+	if native == nil {
+		return nil
+	}
+
+	var res []string
+	for *native != nil {
+		res = append(res, gostring(*native))
+		native = C.nextGstr(native)
+	}
+	return res
+}
+
+// use C.g_strfreev to free the result
+func stringArray2Native(ss []string) **C.gchar{
+	css := C.make_strings(C.int(len(ss) + 1))
+	for i, s := range ss {
+		ptr := C.CString(s)
+		C.set_string(css, C.int(i), gstring(ptr))
+	}
+	C.set_string(css, C.int(len(ss)), nil)
+	return css
 }
 
 //-----------------------------------------------------------------------
@@ -518,8 +562,17 @@ func (v *Widget) DragDestAddUriTargets() {
 // GtkIconTheme
 //-----------------------------------------------------------------------
 
+type IconTheme struct {
+	GtkIconTheme *C.GtkIconTheme
+}
+
 // gtk_icon_theme_new
+
 // gtk_icon_theme_get_default
+func GetDefaultIconTheme() *IconTheme {
+	return &IconTheme{C.gtk_icon_theme_get_default()}
+}
+
 // gtk_icon_theme_get_for_screen
 // gtk_icon_theme_set_screen
 // gtk_icon_theme_set_search_path
@@ -528,23 +581,61 @@ func (v *Widget) DragDestAddUriTargets() {
 // gtk_icon_theme_prepend_search_path
 // gtk_icon_theme_set_custom_theme
 // gtk_icon_theme_has_icon
+
+type IconLookupFlags C.GtkIconLookupFlags
+
+var (
+	IconLookupNoSVG           IconLookupFlags = C.GTK_ICON_LOOKUP_NO_SVG
+	IconLookupForceSVG        IconLookupFlags = C.GTK_ICON_LOOKUP_FORCE_SVG
+	IconLookupUseBuiltin      IconLookupFlags = C.GTK_ICON_LOOKUP_USE_BUILTIN
+	IconLookupGenericFallback IconLookupFlags = C.GTK_ICON_LOOKUP_GENERIC_FALLBACK
+	IconLookupForceSize       IconLookupFlags = C.GTK_ICON_LOOKUP_FORCE_SIZE
+)
+
 // gtk_icon_theme_lookup_icon
 // gtk_icon_theme_choose_icon
+
 // gtk_icon_theme_lookup_by_gicon
-// gtk_icon_theme_load_icon
+func (it *IconTheme) LookupByGIcon(icon *gio.GIcon, width int) *IconInfo {
+
+	return &IconInfo{C.gtk_icon_theme_lookup_by_gicon(
+		it.GtkIconTheme,
+		(*C.GIcon)(unsafe.Pointer(icon.GIcon)),
+		gint(width),
+		C.GtkIconLookupFlags(IconLookupUseBuiltin),
+	)}
+}
+
 // gtk_icon_theme_list_contexts
 // gtk_icon_theme_list_icons
 // gtk_icon_theme_get_icon_sizes
 // gtk_icon_theme_get_example_icon_name
 // gtk_icon_theme_rescan_if_needed
 // gtk_icon_theme_add_builtin_icon
+
+type IconInfo struct {
+	GtkIconInfo *C.GtkIconInfo
+}
+
 // gtk_icon_info_copy
 // gtk_icon_info_free
 // gtk_icon_info_new_for_pixbuf
 // gtk_icon_info_get_base_size
 // gtk_icon_info_get_filename
 // gtk_icon_info_get_builtin_pixbuf
+
 // gtk_icon_info_load_icon
+func (ii *IconInfo) LoadIcon() (*gdkpixbuf.GdkPixbuf, error) {
+	var gerror *C.GError
+	pixbuf := C.gtk_icon_info_load_icon(ii.GtkIconInfo, &gerror)
+
+	if gerror != nil {
+		return nil, glib.ErrorFromNative(unsafe.Pointer(gerror))
+	}
+
+	return gdkpixbuf.NewGdkPixbuf(unsafe.Pointer(pixbuf)), nil
+}
+
 // gtk_icon_info_set_raw_coordinates
 // gtk_icon_info_get_embedded_rect
 // gtk_icon_info_get_attach_points
@@ -705,7 +796,15 @@ func StockListIDs() *glib.SList {
 // gtk_icon_set_ref
 // gtk_icon_set_render_icon
 // gtk_icon_set_unref
+
 // gtk_icon_size_lookup
+func IconSizeLookup(size IconSize) (width int, height int) {
+	var _width, _height C.gint
+	C.gtk_icon_size_lookup(C.GtkIconSize(size), &_width, &_height)
+
+	return int(_width), int(_height)
+}
+
 // gtk_icon_size_lookup_for_settings
 // gtk_icon_size_register
 // gtk_icon_size_register_alias
@@ -814,6 +913,113 @@ func (s *Settings) SetDoubleProperty(name string, v_double float64, origin strin
 
 // gtk_gc_get
 // gtk_gc_release
+
+//-----------------------------------------------------------------------
+// GtkStyle
+//-----------------------------------------------------------------------
+
+type Style struct {
+	GStyle *C.GtkStyle
+}
+
+func NewStyle() *Style {
+	return &Style{C.gtk_style_new()}
+}
+
+func (v *Style) Copy() *Style {
+	return &Style{C.gtk_style_copy(STYLE(v))}
+}
+
+func (v *Style) Attach(window *Window) *Style {
+	return &Style{C.gtk_style_attach(STYLE(v), C.toGdkWindow(unsafe.Pointer(window)))}
+}
+
+func (v *Style) Detach() {
+	C.gtk_style_detach(STYLE(v))
+}
+
+func (v *Style) SetBackground(window *Window, state StateType) {
+	C.gtk_style_set_background(STYLE(v), C.toGdkWindow(unsafe.Pointer(window)), C.GtkStateType(state))
+}
+
+// gtk_style_apply_default_background
+
+func (v *Style) LookupColor(colorName string) (*gdk.Color, bool) {
+	color_name := C.CString(colorName)
+	defer cfree(color_name)
+	color := new(gdk.Color)
+	b := C.gtk_style_lookup_color(v.GStyle, gstring(color_name), (*C.GdkColor)(unsafe.Pointer(&color.GColor)))
+	return color, gobool(b)
+}
+
+// gtk_style_lookup_icon_set
+// gtk_style_render_icon
+// gtk_style_get_style_property
+
+// gtk_style_get_valist
+// gtk_style_get
+// gtk_paint_arrow
+// gtk_paint_box
+// gtk_paint_box_gap
+// gtk_paint_check
+// gtk_paint_diamond
+// gtk_paint_extension
+// gtk_paint_flat_box
+// gtk_paint_focus
+// gtk_paint_handle
+// gtk_paint_hline
+// gtk_paint_option
+// gtk_paint_polygon
+// gtk_paint_shadow
+// gtk_paint_shadow_gap
+// gtk_paint_slider
+// gtk_paint_spinner
+// gtk_paint_tab
+// gtk_paint_vline
+// gtk_paint_expander
+// gtk_paint_layout
+// gtk_paint_resize_grip
+// gtk_draw_insertion_cursor
+
+type Border struct {
+	Left int
+	Right int
+	Top int
+	Bottom int
+}
+
+// gtk_border_new
+// gtk_border_copy
+// gtk_border_free
+
+// Deprecated:
+// gtk_style_ref
+// gtk_style_unref
+// gtk_style_apply_default_pixmap
+// gtk_style_get_font
+// gtk_style_set_font
+// gtk_draw_hline
+// gtk_draw_vline
+// gtk_draw_shadow
+// gtk_draw_polygon
+// gtk_draw_arrow
+// gtk_draw_diamond
+// gtk_draw_string
+// gtk_draw_box
+// gtk_draw_box_gap
+// gtk_draw_check
+// gtk_draw_extension
+// gtk_draw_flat_box
+// gtk_draw_focus
+// gtk_draw_handle
+// gtk_draw_option
+// gtk_draw_shadow_gap
+// gtk_draw_slider
+// gtk_draw_tab
+// gtk_draw_expander
+// gtk_draw_layout
+// gtk_draw_resize_grip
+// gtk_paint_string
 
 //-----------------------------------------------------------------------
 // Selections
@@ -961,11 +1167,10 @@ const (
 
 type Dialog struct {
 	Window
-	wfr *Widget // WidgetForResponse
 }
 
 func NewDialog() *Dialog {
-	return &Dialog{Window{Bin{Container{Widget{C.gtk_dialog_new()}}}}, nil}
+	return &Dialog{Window{Bin{Container{Widget{C.gtk_dialog_new()}}}}}
 }
 
 // gtk_dialog_new_with_buttons
@@ -996,26 +1201,26 @@ func (v *Dialog) SetDefaultResponse(id ResponseType) {
 	C.gtk_dialog_set_default_response(DIALOG(v), gint(int(id)))
 }
 
-// gtk_dialog_set_has_separator //deprecated since 2.22
-// gtk_dialog_set_response_sensitive
+func (v *Dialog) SetResponseSensitive(id ResponseType, setting bool) {
+	C.gtk_dialog_set_response_sensitive(DIALOG(v), gint(int(id)), gbool(setting))
+}
 
 func (v *Dialog) GetResponseForWidget(w *Widget) ResponseType {
 	return ResponseType(int(C.gtk_dialog_get_response_for_widget(DIALOG(v), w.GWidget)))
 }
 
-func (v *Dialog) GetWidgetForResponse(id int) *Widget {
+func (v *Dialog) GetWidgetForResponse(id ResponseType) *Widget {
 	panic_if_version_older(2, 20, 0, "gtk_dialog_get_widget_for_response()")
-	w := C._gtk_dialog_get_widget_for_response(DIALOG(v), gint(id))
-	if v.wfr == nil {
-		v.wfr = &Widget{w}
-	} else {
-		v.wfr.GWidget = w
-	}
-	return v.wfr
+	w := C._gtk_dialog_get_widget_for_response(DIALOG(v), gint(int(id)))
+	return &Widget{w}
 }
 
 // gtk_dialog_get_action_area
-// gtk_dialog_get_content_area
+
+func (v *Dialog) GetContentArea() *VBox {
+	return &VBox{Box{Container{Widget{C.gtk_dialog_get_content_area(DIALOG(v))}}}}
+}
+
 // gtk_alternative_dialog_button_order
 // gtk_dialog_set_alternative_button_order
 // gtk_dialog_set_alternative_button_order_from_array
@@ -1062,7 +1267,7 @@ func NewMessageDialog(parent *Window, flag DialogFlags, t MessageType, buttons B
 			C.GtkDialogFlags(flag),
 			C.GtkMessageType(t),
 			C.GtkButtonsType(buttons),
-			gstring(ptr))}}}}, nil}}
+			gstring(ptr))}}}}}}
 }
 
 func NewMessageDialogWithMarkup(parent *Window, flag DialogFlags, t MessageType, buttons ButtonsType, format string, args ...interface{}) *MessageDialog {
@@ -1072,7 +1277,7 @@ func NewMessageDialogWithMarkup(parent *Window, flag DialogFlags, t MessageType,
 			C.GtkDialogFlags(flag),
 			C.GtkMessageType(t),
 			C.GtkButtonsType(buttons),
-			nil)}}}}, nil}}
+			nil)}}}}}}
 	r.SetMarkup(fmt.Sprintf(format, args...))
 	return r
 }
@@ -1312,11 +1517,10 @@ func (v *Window) SetSkipTaskbarHint(setting bool) {
 // gtk_window_get_default_icon_list
 // gtk_window_get_default_icon_name
 
-func (v *Window) GetDefaultSize(width *int, height *int) {
+func (v *Window) GetDefaultSize() (width int, height int) {
 	var cwidth, cheight C.gint
 	C.gtk_window_get_default_size(WINDOW(v), &cwidth, &cheight)
-	*width = int(cwidth)
-	*height = int(cheight)
+	return int(cwidth), int(cheight)
 }
 
 func (v *Window) GetDestroyWithParent() bool {
@@ -1338,20 +1542,18 @@ func (v *Window) GetModal() bool {
 	return gobool(C.gtk_window_get_modal(WINDOW(v)))
 }
 
-func (v *Window) GetPosition(root_x *int, root_y *int) {
+func (v *Window) GetPosition() (root_x int, root_y int) {
 	var croot_x, croot_y C.gint
 	C.gtk_window_get_position(WINDOW(v), &croot_x, &croot_y)
-	*root_x = int(croot_x)
-	*root_y = int(croot_y)
+	return int(croot_x), int(croot_y)
 }
 
 // gtk_window_get_role
 
-func (v *Window) GetSize(width *int, height *int) {
+func (v *Window) GetSize() (width int, height int) {
 	var cwidth, cheight C.gint
 	C.gtk_window_get_size(WINDOW(v), &cwidth, &cheight)
-	*width = int(cwidth)
-	*height = int(cheight)
+	return int(cwidth), int(cheight)
 }
 
 func (v *Window) GetTitle() string {
@@ -1445,7 +1647,7 @@ type AboutDialog struct {
 }
 
 func NewAboutDialog() *AboutDialog {
-	return &AboutDialog{Dialog{Window{Bin{Container{Widget{C.gtk_about_dialog_new()}}}}, nil}}
+	return &AboutDialog{Dialog{Window{Bin{Container{Widget{C.gtk_about_dialog_new()}}}}}}
 }
 
 func (v *AboutDialog) GetProgramName() string {
@@ -1530,78 +1732,33 @@ func (v *AboutDialog) SetWebsiteLabel(website_label string) {
 }
 
 func (v *AboutDialog) GetAuthors() []string {
-	var authors []string
-	cauthors := C.gtk_about_dialog_get_authors(ABOUT_DIALOG(v))
-	for {
-		authors = append(authors, gostring(*cauthors))
-		cauthors = C.nextGstr(cauthors)
-		if *cauthors == nil {
-			break
-		}
-	}
-	return authors
+	return native2StringArray(C.gtk_about_dialog_get_authors(ABOUT_DIALOG(v)))
 }
 
 func (v *AboutDialog) SetAuthors(authors []string) {
-	cauthors := C.make_strings(C.int(len(authors) + 1))
-	for i, author := range authors {
-		ptr := C.CString(author)
-		defer cfree(ptr)
-		C.set_string(cauthors, C.int(i), gstring(ptr))
-	}
-	C.set_string(cauthors, C.int(len(authors)), nil)
+	cauthors := stringArray2Native(authors)
+	defer C.g_strfreev(cauthors)
 	C.gtk_about_dialog_set_authors(ABOUT_DIALOG(v), cauthors)
-	C.destroy_strings(cauthors)
 }
 
 func (v *AboutDialog) GetArtists() []string {
-	var artists []string
-	cartists := C.gtk_about_dialog_get_artists(ABOUT_DIALOG(v))
-	for {
-		artists = append(artists, gostring(*cartists))
-		cartists = C.nextGstr(cartists)
-		if *cartists == nil {
-			break
-		}
-	}
-	return artists
+	return native2StringArray(C.gtk_about_dialog_get_artists(ABOUT_DIALOG(v)))
 }
 
 func (v *AboutDialog) SetArtists(artists []string) {
-	cartists := C.make_strings(C.int(len(artists)) + 1)
-	for i, author := range artists {
-		ptr := C.CString(author)
-		defer cfree(ptr)
-		C.set_string(cartists, C.int(i), gstring(ptr))
-	}
-	C.set_string(cartists, C.int(len(artists)), nil)
+	cartists := stringArray2Native(artists)
+	defer C.g_strfreev(cartists)
 	C.gtk_about_dialog_set_artists(ABOUT_DIALOG(v), cartists)
-	C.destroy_strings(cartists)
 }
 
 func (v *AboutDialog) GetDocumenters() []string {
-	var documenters []string
-	cdocumenters := C.gtk_about_dialog_get_documenters(ABOUT_DIALOG(v))
-	for {
-		documenters = append(documenters, gostring(*cdocumenters))
-		cdocumenters = C.nextGstr(cdocumenters)
-		if *cdocumenters == nil {
-			break
-		}
-	}
-	return documenters
+	return native2StringArray(C.gtk_about_dialog_get_documenters(ABOUT_DIALOG(v)))
 }
 
 func (v *AboutDialog) SetDocumenters(documenters []string) {
-	cdocumenters := C.make_strings(C.int(len(documenters)) + 1)
-	for i, author := range documenters {
-		ptr := C.CString(author)
-		defer cfree(ptr)
-		C.set_string(cdocumenters, C.int(i), gstring(ptr))
-	}
-	C.set_string(cdocumenters, C.int(len(documenters)), nil)
+	cdocumenters := stringArray2Native(documenters)
+	defer C.g_strfreev(cdocumenters)
 	C.gtk_about_dialog_set_documenters(ABOUT_DIALOG(v), cdocumenters)
-	C.destroy_strings(cdocumenters)
 }
 
 func (v *AboutDialog) GetTranslatorCredits() string {
@@ -2064,11 +2221,10 @@ func (v *Label) GetLineWrapMode() pango.WrapMode {
 }
 
 // gtk_label_get_mnemonic_widget
-func (v *Label) GetSelectionBounds(start *int, end *int) {
+func (v *Label) GetSelectionBounds() (start int, end int) {
 	var cstart, cend C.gint
 	C.gtk_label_get_selection_bounds(LABEL(v), &cstart, &cend)
-	*start = int(cstart)
-	*end = int(cend)
+	return int(cstart), int(cend)
 }
 
 func (v *Label) GetUseMarkup() bool {
@@ -2878,17 +3034,21 @@ type ScaleButton struct {
 }
 
 // TODO: wrapper around icons** C.gchar
-func NewScaleButton(size IconSize, min, max, step float64, icons **C.gchar) *ScaleButton {
+func NewScaleButton(size IconSize, min, max, step float64, icons []string) *ScaleButton {
+	cicons := stringArray2Native(icons)
+	defer C.g_strfreev(cicons)
 	return &ScaleButton{Bin{Container{Widget{
-		C.gtk_scale_button_new(C.GtkIconSize(size), gdouble(min), gdouble(max), gdouble(step), icons)}}}}
+		C.gtk_scale_button_new(C.GtkIconSize(size), gdouble(min), gdouble(max), gdouble(step), cicons)}}}}
 }
 
 func (v *ScaleButton) SetAdjustment(a *Adjustment) {
 	C.gtk_scale_button_set_adjustment(SCALEBUTTON(v), a.GAdjustment)
 }
 
-func (v *ScaleButton) SetIcons(icons **C.gchar) {
-	C.gtk_scale_button_set_icons(SCALEBUTTON(v), icons)
+func (v *ScaleButton) SetIcons(icons []string) {
+	cicons := stringArray2Native(icons)
+	defer C.g_strfreev(cicons)
+	C.gtk_scale_button_set_icons(SCALEBUTTON(v), cicons)
 }
 
 func (v *ScaleButton) SetValue(value float64) {
@@ -3000,7 +3160,18 @@ func (v *Entry) GetHasFrame() bool {
 	return gobool(C.gtk_entry_get_has_frame(ENTRY(v)))
 }
 
-// gtk_entry_get_inner_border
+func (v *Entry) GetInnerBorder() *Border {
+	b := C.gtk_entry_get_inner_border(ENTRY(v))
+	if b == nil {
+		return nil
+	}
+	return &Border{
+		Left: int(b.left),
+		Right: int(b.right),
+		Top: int(b.top),
+		Bottom: int(b.bottom),
+	}
+}
 
 func (v *Entry) GetWidthChars() int {
 	return int(C.gtk_entry_get_width_chars(ENTRY(v)))
@@ -3014,7 +3185,19 @@ func (v *Entry) SetHasFrame(setting bool) {
 	C.gtk_entry_set_has_frame(ENTRY(v), gbool(setting))
 }
 
-// gtk_entry_set_inner_border
+func (v *Entry) SetInnerBorder(border *Border) {
+	if(border == nil) {
+		C.gtk_entry_set_inner_border(ENTRY(v), nil)
+		return
+	}
+	nborder := C.struct__GtkBorder{
+		left:   gint(border.Left),
+		right:  gint(border.Right),
+		top:    gint(border.Top),
+		bottom: gint(border.Bottom),
+	}
+	C.gtk_entry_set_inner_border(ENTRY(v), &nborder)
+}
 
 func (v *Entry) SetWidthChars(i int) {
 	C.gtk_entry_set_width_chars(ENTRY(v), gint(i))
@@ -4159,11 +4342,10 @@ func (v *TextView) ScrollToIter(iter *TextIter, wm float64, ua bool, xa float64,
 // void gtk_text_view_get_iter_location(GtkTextView* text_view, const GtkTextIter* iter, GdkRectangle* location);
 // void gtk_text_view_get_line_at_y(GtkTextView* text_view, GtkTextIter* target_iter, gint y, gint* line_top);
 
-func (v *TextView) GetLineYrange(iter *TextIter, y *int, h *int) {
+func (v *TextView) GetLineYrange(iter *TextIter) (y int, height int) {
 	var yy, hh C.gint
 	C.gtk_text_view_get_line_yrange(TEXT_VIEW(v), &iter.GTextIter, &yy, &hh)
-	*y = int(yy)
-	*h = int(hh)
+	return int(yy), int(hh)
 }
 
 func (v *TextView) GetIterAtLocation(iter *TextIter, x int, y int) {
@@ -5032,7 +5214,11 @@ func (v *TreeView) RowExpanded(path *TreePath) bool {
 //GtkTreeViewRowSeparatorFunc gtk_tree_view_get_row_separator_func (GtkTreeView *tree_view);
 //void gtk_tree_view_set_row_separator_func (GtkTreeView *tree_view, GtkTreeViewRowSeparatorFunc func, gpointer data, GDestroyNotify destroy);
 //gboolean gtk_tree_view_get_rubber_banding (GtkTreeView *tree_view);
-//void gtk_tree_view_set_rubber_banding (GtkTreeView *tree_view, gboolean enable);
+
+func (v *TreeView) SetRubberBanding(enable bool) {
+	C.gtk_tree_view_set_rubber_banding(TREE_VIEW(v), gbool(enable))
+}
+
 //gboolean gtk_tree_view_is_rubber_banding_active (GtkTreeView *tree_view);
 //gboolean gtk_tree_view_get_enable_tree_lines (GtkTreeView *tree_view);
 //void gtk_tree_view_set_enable_tree_lines (GtkTreeView *tree_view, gboolean enabled);
@@ -5190,7 +5376,7 @@ func (v *IconView) ScrollToPath(path *TreePath, use bool, ra float64, ca float64
 // GtkTreeSortable
 //-----------------------------------------------------------------------
 type SortType int
-type SortFunc func(m *TreeModel, a *TreeIter, b *TreeIter) int
+type SortFunc func(m *TreeModel, a *TreeIter, b *TreeIter, userData interface{}) int
 
 const (
 	SORT_ASCENDING SortType = iota
@@ -5202,9 +5388,14 @@ const (
 	TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID int = -2
 )
 
+type sortFuncInfo struct {
+	fun SortFunc
+	userData interface{}
+}
+
 type TreeSortable struct {
 	GTreeSortable *C.GtkTreeSortable
-	sortFuncs     map[int]SortFunc
+	sortFuncs     map[int]sortFuncInfo
 }
 
 func NewTreeSortable(model ITreeModel) *TreeSortable {
@@ -5212,7 +5403,7 @@ func NewTreeSortable(model ITreeModel) *TreeSortable {
 	if model != nil {
 		tm = model.cTreeModel()
 	}
-	return &TreeSortable{C.toGTreeSortable(tm), make(map[int]SortFunc)}
+	return &TreeSortable{C.toGTreeSortable(tm), make(map[int]sortFuncInfo)}
 }
 
 // gtk_tree_sortable_sort_column_changed
@@ -5227,8 +5418,8 @@ func (ts *TreeSortable) SetSortColumnId(id int, order SortType) {
 	C.gtk_tree_sortable_set_sort_column_id(ts.GTreeSortable, gint(id), C.GtkSortType(order))
 }
 
-func (ts *TreeSortable) SetSortFunc(col int, fun SortFunc) {
-	ts.sortFuncs[col] = fun
+func (ts *TreeSortable) SetSortFunc(col int, fun SortFunc, userData interface{}) {
+	ts.sortFuncs[col] = sortFuncInfo{fun, userData}
 	C._gtk_tree_sortable_set_sort_func(ts.GTreeSortable, gint(col), pointer.Save(&ts))
 }
 
@@ -5238,17 +5429,25 @@ func _go_call_sort_func(gsfi *C._gtk_sort_func_info) {
 		return
 	}
 	gots := *(pointer.Restore(unsafe.Pointer(gsfi.gots)).(**TreeSortable))
-	if gots.sortFuncs[int(gsfi.columnNum)] == nil {
+	if gots.sortFuncs[int(gsfi.columnNum)].fun == nil {
 		return
 	}
 	var a, b TreeIter
 	a.GTreeIter = gsfi.a
 	b.GTreeIter = gsfi.b
-	gsfi.ret = C.int(gots.sortFuncs[int(gsfi.columnNum)](&TreeModel{gsfi.model}, &a, &b))
+	fun := gots.sortFuncs[int(gsfi.columnNum)].fun
+	userData := gots.sortFuncs[int(gsfi.columnNum)].userData
+	gsfi.ret = C.int(fun(&TreeModel{gsfi.model}, &a, &b, userData))
 }
 
-// gtk_tree_sortable_set_default_sort_func
-// gtk_tree_sortable_has_default_sort_func
+func (ts *TreeSortable) SetDefaultSortFunc(fun SortFunc, userData interface{}) {
+	ts.sortFuncs[TREE_SORTABLE_DEFAULT_SORT_COLUMN_ID] = sortFuncInfo{fun, userData}
+	C._gtk_tree_sortable_set_default_sort_func(ts.GTreeSortable, pointer.Save(&ts))
+}
+
+func (ts *TreeSortable) HasDefaultSortFunc() bool {
+	return gobool(C.gtk_tree_sortable_has_default_sort_func(ts.GTreeSortable))
+}
 
 //-----------------------------------------------------------------------
 // GtkTreeModelSort
@@ -5900,31 +6099,14 @@ func (v *ComboBoxText) GetActiveText() string {
 // GtkMenu
 //-----------------------------------------------------------------------
 type Menu struct {
-	Container
-	//TODO GtkMenuShell
+	MenuShell
 }
 
 func NewMenu() *Menu {
-	return &Menu{Container{Widget{C.gtk_menu_new()}}}
+	return &Menu{MenuShell{Container{Widget{C.gtk_menu_new()}}}}
 }
 
 // void gtk_menu_set_screen (GtkMenu *menu, GdkScreen *screen);
-
-//TODO remove when GtkMenuShell is done
-func (v *Menu) Append(child IWidget) {
-	C.gtk_menu_shell_append(MENU_SHELL(v), ToNative(child))
-}
-
-//TODO remove when GtkMenuShell is done
-func (v *Menu) Prepend(child IWidget) {
-	C.gtk_menu_shell_prepend(MENU_SHELL(v), ToNative(child))
-}
-
-//TODO remove when GtkMenuShell is done
-func (v *Menu) Insert(child IWidget, position int) {
-	C.gtk_menu_shell_insert(MENU_SHELL(v), ToNative(child), gint(position))
-}
-
 // void gtk_menu_reorder_child(GtkMenu *menu, GtkWidget *child, gint position);
 // void gtk_menu_attach(GtkMenu *menu, GtkWidget *child, guint left_attach, guint right_attach, guint top_attach, guint bottom_attach);
 
@@ -5943,7 +6125,13 @@ func (v *Menu) Popup(parent_menu_shell, parent_menu_item IWidget, f MenuPosition
 // GtkAccelGroup* gtk_menu_get_accel_group (GtkMenu *menu);
 // void gtk_menu_set_accel_path(GtkMenu *menu, const gchar *accel_path);
 // const gchar* gtk_menu_get_accel_path(GtkMenu *menu);
-// void gtk_menu_set_title(GtkMenu *menu, const gchar *title);
+
+func (v *Menu) SetTitle(title string) {
+	ptr := C.CString(title)
+	defer cfree(ptr)
+	C.gtk_menu_set_title(MENU(v), gstring(ptr))
+}
+
 // G_CONST_RETURN gchar *gtk_menu_get_title(GtkMenu *menu);
 // void gtk_menu_set_monitor(GtkMenu *menu, gint monitor_num);
 // gint gtk_menu_get_monitor(GtkMenu *menu);
@@ -6030,11 +6218,11 @@ const (
 )
 
 type MenuBar struct {
-	Widget
+	MenuShell
 }
 
 func NewMenuBar() *MenuBar {
-	return &MenuBar{Widget{C.gtk_menu_bar_new()}}
+	return &MenuBar{MenuShell{Container{Widget{C.gtk_menu_bar_new()}}}}
 }
 
 func (v *MenuBar) SetPackDirection(pack_dir PackDirection) {
@@ -6051,21 +6239,6 @@ func (v *MenuBar) SetChildPackDirection(pack_dir PackDirection) {
 
 func (v *MenuBar) GetChildPackDirection() PackDirection {
 	return PackDirection(C.gtk_menu_bar_get_child_pack_direction(MENU_BAR(v)))
-}
-
-//TODO da rimuovere, creare GtkMenuShell e usarlo come anonymous field per GtkMenu
-func (v *MenuBar) Append(child IWidget) {
-	C.gtk_menu_shell_append(MENU_BAR_SHELL(v), ToNative(child))
-}
-
-//TODO da rimuovere, creare GtkMenuShell e usarlo come anonymous field per GtkMenu
-func (v *MenuBar) Prepend(child IWidget) {
-	C.gtk_menu_shell_prepend(MENU_BAR_SHELL(v), ToNative(child))
-}
-
-//TODO da rimuovere, creare GtkMenuShell e usarlo come anonymous field per GtkMenu
-func (v *MenuBar) Insert(child IWidget, position int) {
-	C.gtk_menu_shell_insert(MENU_BAR_SHELL(v), ToNative(child), gint(position))
 }
 
 //-----------------------------------------------------------------------
@@ -6850,7 +7023,7 @@ func (v *MenuToolButton) SetMenu(menu *Menu) {
 
 func (v *MenuToolButton) GetMenu() *Menu {
 	if v.mw == nil {
-		v.mw = &Menu{Container{Widget{C.gtk_menu_tool_button_get_menu(MENU_TOOL_BUTTON(v))}}}
+		v.mw = &Menu{MenuShell{Container{Widget{C.gtk_menu_tool_button_get_menu(MENU_TOOL_BUTTON(v))}}}}
 	}
 	return v.mw
 }
@@ -7618,18 +7791,48 @@ func (v *FileChooser) GetLocalOnly() bool {
 	return gobool(C.gtk_file_chooser_get_local_only(v.GFileChooser))
 }
 
-// void gtk_file_chooser_set_select_multiple(GtkFileChooser* chooser, gboolean select_multiple);
-// gboolean gtk_file_chooser_get_select_multiple(GtkFileChooser* chooser);
-// void gtk_file_chooser_set_show_hidden(GtkFileChooser* chooser, gboolean show_hidden);
-// gboolean gtk_file_chooser_get_show_hidden(GtkFileChooser* chooser);
-// void gtk_file_chooser_set_do_overwrite_confirmation(GtkFileChooser* chooser, gboolean do_overwrite_confirmation);
-// gboolean gtk_file_chooser_get_do_overwrite_confirmation(GtkFileChooser* chooser);
-// void gtk_file_chooser_set_create_folders(GtkFileChooser* chooser, gboolean create_folders); //since 2.18
-// gboolean gtk_file_chooser_get_create_folders(GtkFileChooser* chooser); //since 2.18
-// void gtk_file_chooser_set_current_name(GtkFileChooser* chooser, const gchar* name);
+func (v *FileChooser) SetSelectMultiple(b bool) {
+	C.gtk_file_chooser_set_select_multiple(v.GFileChooser, gbool(b))
+}
+
+func (v *FileChooser) GetSelectMultiple() bool {
+	return gobool(C.gtk_file_chooser_get_select_multiple(v.GFileChooser))
+}
+
+func (v *FileChooser) SetShowHidden(showHidden bool) {
+	C.gtk_file_chooser_set_show_hidden(v.GFileChooser, gbool(showHidden))
+}
+
+func (v *FileChooser) GetShowHidden() bool {
+	return gobool(C.gtk_file_chooser_get_show_hidden(v.GFileChooser))
+}
+
+func (v *FileChooser) SetDoOverwriteConfirmation(b bool) {
+	C.gtk_file_chooser_set_do_overwrite_confirmation(v.GFileChooser, gbool(b))
+}
+
+func (v *FileChooser) GetDoOverwriteConfirmation() bool {
+	return gobool(C.gtk_file_chooser_get_do_overwrite_confirmation(v.GFileChooser))
+}
+
+func (v *FileChooser) SetCreateFolders(b bool) {
+	panic_if_version_older_auto(2, 18, 0)
+	C.gtk_file_chooser_set_create_folders(v.GFileChooser, gbool(b))
+}
+
+func (v *FileChooser) GetCreateFolders() bool {
+	panic_if_version_older_auto(2, 18, 0)
+	return gobool(C.gtk_file_chooser_get_create_folders(v.GFileChooser))
+}
+
+func (v *FileChooser) SetCurrentName(name string) {
+	ptr := C.CString(name)
+	defer cfree(ptr)
+	C.gtk_file_chooser_set_current_name(v.GFileChooser, gstring(ptr))
+}
 
 func (v *FileChooser) GetFilename() string {
-	return gostring(C.gtk_file_chooser_get_filename(v.GFileChooser))
+	return gostringAndFree(C.gtk_file_chooser_get_filename(v.GFileChooser))
 }
 
 func (v *FileChooser) SetFilename(filename string) {
@@ -7638,11 +7841,30 @@ func (v *FileChooser) SetFilename(filename string) {
 	C.gtk_file_chooser_set_filename(v.GFileChooser, ptr)
 }
 
-// gboolean gtk_file_chooser_select_filename(GtkFileChooser* chooser, const char* filename);
-// void gtk_file_chooser_unselect_filename(GtkFileChooser* chooser, const char* filename);
-// void gtk_file_chooser_select_all(GtkFileChooser* chooser);
-// void gtk_file_chooser_unselect_all(GtkFileChooser* chooser);
-// GSList*  gtk_file_chooser_get_filenames(GtkFileChooser* chooser);
+// GTK doc said the return value is "Not useful".
+func (v *FileChooser) SelectFilename(filename string) bool {
+	ptr := C.CString(filename)
+	defer cfree(ptr)
+	return gobool(C.gtk_file_chooser_select_filename(v.GFileChooser, ptr))
+}
+
+func (v *FileChooser) UnselectFilename(filename string) {
+	ptr := C.CString(filename)
+	defer cfree(ptr)
+	C.gtk_file_chooser_unselect_filename(v.GFileChooser, ptr)
+}
+
+func (v *FileChooser) SelectAll() {
+	C.gtk_file_chooser_select_all(v.GFileChooser)
+}
+
+func (v *FileChooser) UnselectAll() {
+	C.gtk_file_chooser_unselect_all(v.GFileChooser)
+}
+
+func (v *FileChooser) GetFilenames() []string {
+	return gslist2StringArrayAndFree(C.gtk_file_chooser_get_filenames(v.GFileChooser))
+}
 
 func (v *FileChooser) SetCurrentFolder(f string) bool {
 	cf := C.CString(f)
@@ -7655,11 +7877,32 @@ func (v *FileChooser) GetCurrentFolder() string {
 	return gostring(C.gtk_file_chooser_get_current_folder(v.GFileChooser))
 }
 
-// gchar*  gtk_file_chooser_get_uri(GtkFileChooser* chooser);
-// gboolean gtk_file_chooser_set_uri(GtkFileChooser* chooser, const char* uri);
-// gboolean gtk_file_chooser_select_uri(GtkFileChooser* chooser, const char* uri);
-// void gtk_file_chooser_unselect_uri(GtkFileChooser* chooser, const char* uri);
-// GSList*  gtk_file_chooser_get_uris(GtkFileChooser* chooser);
+func (v *FileChooser) SetUri(uri string) bool {
+	ptr := C.CString(uri)
+	defer cfree(ptr)
+	return gobool(C.gtk_file_chooser_set_uri(v.GFileChooser, ptr))
+}
+
+func (v *FileChooser) GetUri() string {
+	return gostringAndFree(C.gtk_file_chooser_get_uri(v.GFileChooser))
+}
+
+func (v *FileChooser) SelectUri(uri string) bool {
+	ptr := C.CString(uri)
+	defer cfree(ptr)
+	return gobool(C.gtk_file_chooser_select_uri(v.GFileChooser, ptr))
+}
+
+func (v *FileChooser) UnselectUri(uri string) {
+	ptr := C.CString(uri)
+	defer cfree(ptr)
+	C.gtk_file_chooser_unselect_uri(v.GFileChooser, ptr)
+}
+
+func (v *FileChooser) GetUris() []string {
+	return gslist2StringArrayAndFree(C.gtk_file_chooser_get_uris(v.GFileChooser))
+}
+
 // gboolean gtk_file_chooser_set_current_folder_uri(GtkFileChooser* chooser, const gchar* uri);
 // gchar*  gtk_file_chooser_get_current_folder_uri(GtkFileChooser* chooser);
 // void gtk_file_chooser_set_preview_widget(GtkFileChooser* chooser, GtkWidget* preview_widget);
@@ -7776,7 +8019,7 @@ func NewFileChooserDialog(title string, parent *Window, file_chooser_action File
 			C.int(file_chooser_action),
 			C.int(button_action),
 			gstring(pbutton))}
-	ret := &FileChooserDialog{Dialog{Window{Bin{Container{widget}}}, nil}, FileChooser{FILE_CHOOSER(&widget)}}
+	ret := &FileChooserDialog{Dialog{Window{Bin{Container{widget}}}}, FileChooser{FILE_CHOOSER(&widget)}}
 	text, res := variadicButtonsToArrays(buttons)
 	for i := range text {
 		ret.AddButton(text[i], res[i])
@@ -7910,6 +8153,88 @@ func (v *FontButton) GetTitle() string {
 	return gostring(C.gtk_font_button_get_title(FONT_BUTTON(v)))
 }
 
+//-----------------------------------------------------------------------
+// GtkFontSelection
+//-----------------------------------------------------------------------
+type FontSelection struct {
+	VBox
+}
+
+func NewFontSelection() *FontSelection {
+	return &FontSelection{VBox{Box{Container{Widget{C.gtk_font_selection_new()}}}}}
+}
+
+func (v *FontSelection) GetFont() *gdk.Font {
+	return gdk.FontFromUnsafe(unsafe.Pointer(C.gtk_font_selection_get_font(FONT_SELECTION(v))))
+}
+
+func (v *FontSelection) GetFontName() string {
+	return gostring(C.gtk_font_selection_get_font_name(FONT_SELECTION(v)))
+}
+
+func (v *FontSelection) SetFontName(name string) {
+	ptr := C.CString(name)
+	defer cfree(ptr)
+	C.gtk_font_selection_set_font_name(FONT_SELECTION(v), gstring(ptr))
+}
+
+// gtk_font_selection_get_preview_text
+// gtk_font_selection_set_preview_text
+// gtk_font_selection_get_face
+// gtk_font_selection_get_face_list
+// gtk_font_selection_get_family
+// gtk_font_selection_get_size
+// gtk_font_selection_get_family_list
+// gtk_font_selection_get_preview_entry
+// gtk_font_selection_get_size_entry
+// gtk_font_selection_get_size_list
+
+//-----------------------------------------------------------------------
+// GtkFontSelectionDialog
+//-----------------------------------------------------------------------
+type FontSelectionDialog struct {
+	Dialog
+}
+
+func NewFontSelectionDialog(title string) *FontSelectionDialog {
+	ptitle := C.CString(title)
+	defer cfree(ptitle)
+	return &FontSelectionDialog{Dialog{Window{Bin{Container{Widget{
+		C.gtk_font_selection_dialog_new(gstring(ptitle))}}}}}}
+}
+
+func (v *FontSelectionDialog) GetFontName() string {
+	return gostring(C.gtk_font_selection_dialog_get_font_name(FONT_SELECTION_DIALOG(v)))
+}
+
+func (v *FontSelectionDialog) SetFontName(font string) {
+	pfont := C.CString(font)
+	defer cfree(pfont)
+	C.gtk_font_selection_dialog_set_font_name(FONT_SELECTION_DIALOG(v), gstring(pfont))
+}
+
+func (v *FontSelectionDialog) GetPreviewText() string {
+	return gostring(C.gtk_font_selection_dialog_get_preview_text(FONT_SELECTION_DIALOG(v)))
+}
+
+func (v *FontSelectionDialog) SetPreviewText(text string) {
+	ptr := C.CString(text)
+	defer cfree(ptr)
+	C.gtk_font_selection_dialog_set_preview_text(FONT_SELECTION_DIALOG(v), gstring(ptr))
+}
+
+func (v *FontSelectionDialog) GetCancelButton() *Widget {
+	return &Widget{C.gtk_font_selection_dialog_get_cancel_button(FONT_SELECTION_DIALOG(v))}
+}
+
+func (v *FontSelectionDialog) GetOkButton() *Widget {
+	return &Widget{C.gtk_font_selection_dialog_get_ok_button(FONT_SELECTION_DIALOG(v))}
+}
+
+func (v *FontSelectionDialog) GetFontSelection() *FontSelection {
+	return &FontSelection{VBox{Box{Container{Widget{
+		C.gtk_font_selection_dialog_get_font_selection(FONT_SELECTION_DIALOG(v))}}}}}
+}
 
 //-----------------------------------------------------------------------
 // GtkInputDialog
@@ -8743,6 +9068,12 @@ func NewDrawingArea() *DrawingArea {
 	return &DrawingArea{Widget{C.gtk_drawing_area_new()}}
 }
 
+//Deprecated: Use GtkWidget.SetSizeRequest() instead.
+func (v *DrawingArea) Size(width, height int) {
+	deprecated_since(2, 0, 0, "gtk_drawing_area_size()")
+	C.gtk_drawing_area_size(DRAWING_AREA(v), gint(width), gint(height))
+}
+
 //-----------------------------------------------------------------------
 // GtkEventBox
 //-----------------------------------------------------------------------
@@ -9091,9 +9422,22 @@ type Item struct {
 // GtkMenuShell
 //-----------------------------------------------------------------------
 
-// gtk_menu_shell_append
-// gtk_menu_shell_prepend
-// gtk_menu_shell_insert
+type MenuShell struct {
+	Container
+}
+
+func (v *MenuShell) Append(child IWidget) {
+	C.gtk_menu_shell_append(MENU_SHELL(v), ToNative(child))
+}
+
+func (v *MenuShell) Prepend(child IWidget) {
+	C.gtk_menu_shell_prepend(MENU_SHELL(v), ToNative(child))
+}
+
+func (v *MenuShell) Insert(child IWidget, position int) {
+	C.gtk_menu_shell_insert(MENU_SHELL(v), ToNative(child), gint(position))
+}
+
 // gtk_menu_shell_deactivate
 // gtk_menu_shell_select_item
 // gtk_menu_shell_select_first
@@ -9120,17 +9464,16 @@ func (m *Misc) SetPadding(xpad, ypad int) {
 }
 
 func (m *Misc) GetAlignment(xalign, yalign *float64) {
-	var gxalign, gyalign *C.gfloat
-	C.gtk_misc_get_alignment(MISC(m), gxalign, gyalign)
-	*xalign = float64(*gxalign)
-	*yalign = float64(*gyalign)
+	var gxalign, gyalign C.gfloat
+	C.gtk_misc_get_alignment(MISC(m), &gxalign, &gyalign)
+	*xalign = float64(gxalign)
+	*yalign = float64(gyalign)
 }
 
-func (m *Misc) GetPadding(xpad, ypad *int) {
-	var gxpad, gypad *C.gint
-	C.gtk_misc_get_padding(MISC(m), gxpad, gypad)
-	*xpad = int(*gxpad)
-	*ypad = int(*gypad)
+func (m *Misc) GetPadding() (xpad, ypad int) {
+	var gxpad, gypad C.gint
+	C.gtk_misc_get_padding(MISC(m), &gxpad, &gypad)
+	return int(gxpad), int(gypad)
 }
 
 //-----------------------------------------------------------------------
@@ -9286,11 +9629,10 @@ func (v *Scale) GetValuePos() PositionType {
 
 // PangoLayout * gtk_scale_get_layout (GtkScale *scale);
 
-func (v *Scale) GetLayoutOffsets(x *int, y *int) {
+func (v *Scale) GetLayoutOffsets() (x int, y int) {
 	var xx, yy C.gint
 	C.gtk_scale_get_layout_offsets(SCALE(v), &xx, &yy)
-	*x = int(xx)
-	*y = int(yy)
+	return int(xx), int(yy)
 }
 
 func (v *Scale) AddMark(value float64, position PositionType, markup string) {
@@ -9671,12 +10013,10 @@ func (v *Widget) GetSettings() *Settings {
 // gtk_widget_get_screen
 // gtk_widget_has_screen
 
-//TODO go can have multiple return, adapt the function!
-func (v *Widget) GetSizeRequest(width *int, height *int) {
+func (v *Widget) GetSizeRequest() (width int, height int) {
 	var w, h C.gint
 	C.gtk_widget_get_size_request(v.GWidget, &w, &h)
-	*width = int(w)
-	*height = int(h)
+	return int(w), int(h)
 }
 
 func (v *Widget) SetChildVisible(setting bool) {

@@ -1,58 +1,101 @@
+
 package gtk3
 
 import (
+	"io/ioutil"
 	"testing"
+	"os"
+	"runtime"
+
+	"github.com/mattn/go-gtk/gtk"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestUpdateTreeViewColumns(t *testing.T) {
-	Init(nil)
-
-	columnsDesc := []struct {
-		Title   string
-		Type    string
-		GTKType ICellRenderer
-	}{
-		{"Col_1", "text", NewCellRendererText()},
-		{"Col_2", "text", NewCellRendererText()},
+func gtkRun() {
+	for gtk.EventsPending() {
+		gtk.MainIterationDo(false)
+		runtime.Gosched()
 	}
+}
 
-	tw := NewTreeView()
-	for i, c := range columnsDesc {
-		tw.AppendColumn(NewTreeViewColumnWithAttributes(c.Title, c.GTKType, c.Type, i))
-	}
+func TestFILE_CHOOSER(t *testing.T) {
+	gtk.Init(nil)
+	d := gtk.NewFileChooserDialog("Select File", nil, gtk.FILE_CHOOSER_ACTION_OPEN, "Save", gtk.RESPONSE_OK)
+	assert.NotNil(t, d)
 
-	columns := tw.GetColumns()
+	d.SetShowHidden(false)
+	assert.False(t, d.GetShowHidden())
+	d.SetShowHidden(true)
+	assert.True(t, d.GetShowHidden())
 
-	if len(columns) != len(columnsDesc) {
-		t.Error("Wrong number of the columns:", len(columns), len(columnsDesc))
-	} else {
+	d.SetDoOverwriteConfirmation(false)
+	assert.False(t, d.GetDoOverwriteConfirmation())
+	d.SetDoOverwriteConfirmation(true)
+	assert.True(t, d.GetDoOverwriteConfirmation())
 
-		for i, _ := range columnsDesc {
-			if columns[i].GetTitle() != columnsDesc[i].Title {
-				t.Error("Wrong column title:", columns[i].GetTitle(), columnsDesc[i].Title)
-			}
-		}
-	}
+	d.SetCreateFolders(false)
+	assert.False(t, d.GetCreateFolders())
+	d.SetCreateFolders(true)
+	assert.True(t, d.GetCreateFolders())
 
-	for lastIndex := len(columns) - 1; lastIndex >= 0; {
-		c := columns[lastIndex]
+	d.SelectFilename("foobar")
+	d.UnselectFilename("foobar")
 
-		after := tw.RemoveColumn(c)
+	d.SelectAll()
+	d.UnselectAll()
 
-		numbersColumns := lastIndex
-		if numbersColumns != after {
-			t.Error("Failed remove column:", numbersColumns, after)
-		}
+	f1, err := ioutil.TempFile("/tmp", "go-gtk")
+	assert.NoError(t, err)
+	f1.Close()
+	defer os.Remove(f1.Name())
 
-		lastIndex -= 1
-		if lastIndex >= 0 {
-			if title := tw.GetColumns()[lastIndex].GetTitle(); title != columnsDesc[lastIndex].Title {
-				t.Error("Wrong column title:", title, columnsDesc[lastIndex].Title)
-			}
-		}
-	}
+	f2, err := ioutil.TempFile("/tmp", "go-gtk")
+	assert.NoError(t, err)
+	f2.Close()
+	defer os.Remove(f2.Name())
 
-	if count := len(tw.GetColumns()); count != 0 {
-		t.Error("Wrong number of the columns:", count)
-	}
+	d.SelectFilename(f1.Name())
+	gtkRun()
+	d.GetFilename()
+	//assert.Equal(t, f1.Name(), d.GetFilename())
+
+	d.GetUri()
+	//assert.Equal(t, "file://"+f1.Name(), d.GetUri())
+	d.SetUri("file://" + f2.Name())
+	d.GetUri()
+	//assert.Equal(t, "file://"+f2.Name(), d.GetUri())
+
+	assert.True(t, d.SelectUri("file://"+f1.Name()))
+	gtkRun()
+	d.UnselectUri("file://"+f1.Name())
+
+	d.UnselectAll()
+	gtkRun()
+	d.GetFilenames()
+	//assert.Equal(t, []string{}, d.GetFilenames())
+	d.GetUris()
+	//assert.Equal(t, []string{}, d.GetUris())
+
+	d.SelectFilename(f2.Name())
+	d.GetFilenames()
+	//assert.Equal(t, []string{f2.Name()}, d.GetFilenames())
+	d.GetUris()
+	//assert.Equal(t, []string{"file://" + f2.Name()}, d.GetUris())
+}
+
+func TestFileChooser_SetCurrentName(t *testing.T) {
+	gtk.Init(nil)
+	d := gtk.NewFileChooserWidget(gtk.FILE_CHOOSER_ACTION_SAVE)
+	d.SetCurrentName("foobar")
+	// no way to check this until GTK+ 3.10
+}
+
+
+func TestMisc_GetPadding(t *testing.T) {
+	gtk.Init(nil)
+	m := gtk.NewImage()
+	m.SetPadding(1, 2)
+	x, y := m.GetPadding()
+	assert.Equal(t, x, 1)
+	assert.Equal(t, y, 2)
 }

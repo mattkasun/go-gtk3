@@ -5,6 +5,8 @@ _cgo_*
 main
 *.exe
 tags
+.idea
+vendor
 
 # example binaries
 example/action/action
@@ -31,4 +33,6 @@ example/toolbar/toolbar
 example/treeview/treeview
 example/twitterstream/twitterstream
 
-.idea/
+coverage.txt
+
+*.swp
