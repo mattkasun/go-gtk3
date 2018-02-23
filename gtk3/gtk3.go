@@ -18,6 +18,7 @@ import (
 
 	"github.com/zurek87/go-gtk3/gdk3"
 	"github.com/zurek87/go-gtk3/gdkpixbuf"
+	"github.com/mattkasun/go-gtk3/gio"
 	"github.com/zurek87/go-gtk3/glib"
 	"github.com/zurek87/go-gtk3/pango"
 	"github.com/mattn/go-pointer"
@@ -118,6 +119,7 @@ func TEXT_VIEW(p *TextView) *C.GtkTextView                 { return C.toGTextVie
 func TEXT_BUFFER(p unsafe.Pointer) *C.GtkTextBuffer        { return C.toGTextBuffer(p) }
 func TEXT_TAG(p unsafe.Pointer) *C.GtkTextTag              { return C.toGTextTag(p) }
 func MENU(p *Menu) *C.GtkMenu                              { return C.toGMenu(p.GWidget) }
+func MENU_BAR (p *MenuBar) *C.GtkMenuBar		{return C.toGMenuBar(p.GWidget) }
 func MENU_SHELL(p *MenuShell) *C.GtkMenuShell              { return C.toGMenuShell(p.GWidget) }
 func MENU_ITEM(p *MenuItem) *C.GtkMenuItem                 { return C.toGMenuItem(p.GWidget) }
 func TOOLBAR(p *Toolbar) *C.GtkToolbar                     { return C.toGToolbar(p.GWidget) }
@@ -915,49 +917,6 @@ func (s *Settings) SetDoubleProperty(name string, v_double float64, origin strin
 // gtk_gc_release
 
 //-----------------------------------------------------------------------
-// GtkStyle
-//-----------------------------------------------------------------------
-
-type Style struct {
-	GStyle *C.GtkStyle
-}
-
-func NewStyle() *Style {
-	return &Style{C.gtk_style_new()}
-}
-
-func (v *Style) Copy() *Style {
-	return &Style{C.gtk_style_copy(STYLE(v))}
-}
-
-func (v *Style) Attach(window *Window) *Style {
-	return &Style{C.gtk_style_attach(STYLE(v), C.toGdkWindow(unsafe.Pointer(window)))}
-}
-
-func (v *Style) Detach() {
-	C.gtk_style_detach(STYLE(v))
-}
-
-func (v *Style) SetBackground(window *Window, state StateType) {
-	C.gtk_style_set_background(STYLE(v), C.toGdkWindow(unsafe.Pointer(window)), C.GtkStateType(state))
-}
-
-// gtk_style_apply_default_background
-
-func (v *Style) LookupColor(colorName string) (*gdk.Color, bool) {
-	color_name := C.CString(colorName)
-	defer cfree(color_name)
-	color := new(gdk.Color)
-	b := C.gtk_style_lookup_color(v.GStyle, gstring(color_name), (*C.GdkColor)(unsafe.Pointer(&color.GColor)))
-	return color, gobool(b)
-}
-
-// gtk_style_lookup_icon_set
-// gtk_style_render_icon
-// gtk_style_get_style_property
-
-// gtk_style_get_valist
-// gtk_style_get
 // gtk_paint_arrow
 // gtk_paint_box
 // gtk_paint_box_gap
@@ -3183,20 +3142,6 @@ func (v *Entry) SetActivatesDefault(setting bool) {
 
 func (v *Entry) SetHasFrame(setting bool) {
 	C.gtk_entry_set_has_frame(ENTRY(v), gbool(setting))
-}
-
-func (v *Entry) SetInnerBorder(border *Border) {
-	if(border == nil) {
-		C.gtk_entry_set_inner_border(ENTRY(v), nil)
-		return
-	}
-	nborder := C.struct__GtkBorder{
-		left:   gint(border.Left),
-		right:  gint(border.Right),
-		top:    gint(border.Top),
-		bottom: gint(border.Bottom),
-	}
-	C.gtk_entry_set_inner_border(ENTRY(v), &nborder)
 }
 
 func (v *Entry) SetWidthChars(i int) {
@@ -8154,89 +8099,6 @@ func (v *FontButton) GetTitle() string {
 }
 
 //-----------------------------------------------------------------------
-// GtkFontSelection
-//-----------------------------------------------------------------------
-type FontSelection struct {
-	VBox
-}
-
-func NewFontSelection() *FontSelection {
-	return &FontSelection{VBox{Box{Container{Widget{C.gtk_font_selection_new()}}}}}
-}
-
-func (v *FontSelection) GetFont() *gdk.Font {
-	return gdk.FontFromUnsafe(unsafe.Pointer(C.gtk_font_selection_get_font(FONT_SELECTION(v))))
-}
-
-func (v *FontSelection) GetFontName() string {
-	return gostring(C.gtk_font_selection_get_font_name(FONT_SELECTION(v)))
-}
-
-func (v *FontSelection) SetFontName(name string) {
-	ptr := C.CString(name)
-	defer cfree(ptr)
-	C.gtk_font_selection_set_font_name(FONT_SELECTION(v), gstring(ptr))
-}
-
-// gtk_font_selection_get_preview_text
-// gtk_font_selection_set_preview_text
-// gtk_font_selection_get_face
-// gtk_font_selection_get_face_list
-// gtk_font_selection_get_family
-// gtk_font_selection_get_size
-// gtk_font_selection_get_family_list
-// gtk_font_selection_get_preview_entry
-// gtk_font_selection_get_size_entry
-// gtk_font_selection_get_size_list
-
-//-----------------------------------------------------------------------
-// GtkFontSelectionDialog
-//-----------------------------------------------------------------------
-type FontSelectionDialog struct {
-	Dialog
-}
-
-func NewFontSelectionDialog(title string) *FontSelectionDialog {
-	ptitle := C.CString(title)
-	defer cfree(ptitle)
-	return &FontSelectionDialog{Dialog{Window{Bin{Container{Widget{
-		C.gtk_font_selection_dialog_new(gstring(ptitle))}}}}}}
-}
-
-func (v *FontSelectionDialog) GetFontName() string {
-	return gostring(C.gtk_font_selection_dialog_get_font_name(FONT_SELECTION_DIALOG(v)))
-}
-
-func (v *FontSelectionDialog) SetFontName(font string) {
-	pfont := C.CString(font)
-	defer cfree(pfont)
-	C.gtk_font_selection_dialog_set_font_name(FONT_SELECTION_DIALOG(v), gstring(pfont))
-}
-
-func (v *FontSelectionDialog) GetPreviewText() string {
-	return gostring(C.gtk_font_selection_dialog_get_preview_text(FONT_SELECTION_DIALOG(v)))
-}
-
-func (v *FontSelectionDialog) SetPreviewText(text string) {
-	ptr := C.CString(text)
-	defer cfree(ptr)
-	C.gtk_font_selection_dialog_set_preview_text(FONT_SELECTION_DIALOG(v), gstring(ptr))
-}
-
-func (v *FontSelectionDialog) GetCancelButton() *Widget {
-	return &Widget{C.gtk_font_selection_dialog_get_cancel_button(FONT_SELECTION_DIALOG(v))}
-}
-
-func (v *FontSelectionDialog) GetOkButton() *Widget {
-	return &Widget{C.gtk_font_selection_dialog_get_ok_button(FONT_SELECTION_DIALOG(v))}
-}
-
-func (v *FontSelectionDialog) GetFontSelection() *FontSelection {
-	return &FontSelection{VBox{Box{Container{Widget{
-		C.gtk_font_selection_dialog_get_font_selection(FONT_SELECTION_DIALOG(v))}}}}}
-}
-
-//-----------------------------------------------------------------------
 // GtkInputDialog
 //-----------------------------------------------------------------------
 
@@ -9069,10 +8931,10 @@ func NewDrawingArea() *DrawingArea {
 }
 
 //Deprecated: Use GtkWidget.SetSizeRequest() instead.
-func (v *DrawingArea) Size(width, height int) {
-	deprecated_since(2, 0, 0, "gtk_drawing_area_size()")
-	C.gtk_drawing_area_size(DRAWING_AREA(v), gint(width), gint(height))
-}
+//func (v *DrawingArea) Size(width, height int) {
+//	deprecated_since(2, 0, 0, "gtk_drawing_area_size()")
+//	C.gtk_drawing_area_size(DRAWING_AREA(v), gint(width), gint(height))
+//}
 
 //-----------------------------------------------------------------------
 // GtkEventBox

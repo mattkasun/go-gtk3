@@ -40,17 +40,17 @@ type FontSelectionDialog struct {
 }
 
 // deprecated
-func NewFontSelectionDialog(title string) *FontSelectionDialog {
-	ptitle := C.CString(title)
-	defer cfree(ptitle)
-	return &FontSelectionDialog{Dialog{Window{Bin{Container{Widget{
-		C.gtk_font_selection_dialog_new(gstring(ptitle))}}}}, nil}}
-}
+//func NewFontSelectionDialog(title string) *FontSelectionDialog {
+//	ptitle := C.gchar(title)
+//	defer cfree(ptitle)
+//	return &FontSelectionDialog{Dialog{Window{Bin{Container{Widget{
+//		C.gtk_font_selection_dialog_new(gchar(ptitle))}}}}, nil}}
+//}
 
 // deprecated
-func (v *FontSelectionDialog) GetFontName() string {
-	return gostring(C.gtk_font_selection_dialog_get_font_name(FONT_SELECTION_DIALOG(v)))
-}
+//func (v *FontSelectionDialog) GetFontName() string {
+//	return gostring(C.gtk_font_selection_dialog_get_font_name(FONT_SELECTION_DIALOG(v)))
+//}
 
 // deprecated
 func (v *FontSelectionDialog) SetFontName(font string) {
